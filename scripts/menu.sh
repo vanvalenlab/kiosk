@@ -24,7 +24,12 @@ function retval() {
 function msgbox() {
   local title=$1
   local message=$2
-  dialog --backtitle "$BRAND" --title "$title" --clear --msgbox "$message" 12 60
+  if [ "$testing" = "0" ]; then
+    dialog --backtitle "$BRAND" --title "$title" --clear --msgbox "$message" 12 60
+  else
+    dialog --backtitle "$BRAND" --title "$title" --clear --msgbox "$message" 12 60 \
+        --input-fd 3 3<${greeting_test_script}
+  fi
   retval $?
 }
 
@@ -36,10 +41,21 @@ function inputbox() {
   local w=${4:-60}
   local h=${5:-8}
   shift
-  value=$(dialog --title "$title" \
-            --inputbox "$label" "$h" "$w" "$default" \
-            --backtitle "${BRAND}" \
-            --output-fd 1)
+  if [ "$testing" = "0" ]; then
+    value=$(dialog --title "$title" \
+        --inputbox "$label" "$h" "$w" "$default" \
+        --backtitle "${BRAND}" \
+        --output-fd 1)
+  else
+    line=$(head -n 1 ${aws_test_script})
+    echo "$line" > ./one_liner
+    value=$(dialog --title "$title" \
+        --inputbox "$label" "$h" "$w" "$default" \
+        --backtitle "${BRAND}" \
+        --output-fd 1 \
+        --input-fd 3 3<./one_liner )
+    tail -n +2 "$aws_test_script" > "$aws_test_script.tmp" && mv "$aws_test_script.tmp" "$aws_test_script"
+  fi
   echo $value
 }
 
@@ -53,11 +69,23 @@ function radiobox() {
   local text_fields=$6
   IFS=$'\n' read -r -a gpu_array <<< "$text_fields"
   shift
-  value=$(dialog --title "$title" \
-            --radiolist "$label" "$h" "$w" "$menu_h" \
-	    	$text_fields \
-            --backtitle "${BRAND}" \
-            --output-fd 1)
+  if [ "$testing" = "0" ]; then
+    value=$(dialog --title "$title" \
+        --radiolist "$label" "$h" "$w" "$menu_h" \
+	    $text_fields \
+        --backtitle "${BRAND}" \
+        --output-fd 1)
+  else
+    line=$(head -n 1 ${aws_test_script})
+    echo "$line" > ./one_liner
+    value=$(dialog --title "$title" \
+        --radiolist "$label" "$h" "$w" "$menu_h" \
+	    $text_fields \
+        --backtitle "${BRAND}" \
+        --output-fd 1 \
+        --input-fd 3 3<./one_liner )
+    tail -n +2 "$aws_test_script" > "$aws_test_script.tmp" && mv "$aws_test_script.tmp" "$aws_test_script"
+  fi
   echo $value
 }
 
@@ -98,22 +126,62 @@ function menu() {
 
   declare -A cloud_providers
   cloud_providers[${CLOUD_PROVIDER:-none}]="(active)"
-  value=$(dialog --clear  --help-button --backtitle "${BRAND}" \
-            --title "[ M A I N - M E N U ]" \
-            --menu "${header_text[*]}" 17 50 7 \
-                "AWS"     "Configure Amazon ${cloud_providers[aws]}" \
-                "GKE"     "Configure Google ${cloud_providers[gke]}" \
-		"Create"  "Create ${CLOUD_PROVIDER^^} Cluster" \
-                "Destroy" "Destroy ${CLOUD_PROVIDER^^} Cluster" \
-		"View"    "View Cluster Address" \
-		"Shell"   "Drop to the shell" \
-                "Exit"    "Exit this kiosk" \
+  # determine which script, if any, to use
+  if [ "$testing" = "1" ]; then
+    if [ "$menu_pass" = "1" ]; then
+      if [ -n "$menu_test_script" ]; then
+        menu_input_script=${menu_test_script}
+        menu_pass=2
+      else
+        testing=0
+      fi
+    elif [ "$menu_pass" = "2" ]; then
+      if [ -n "$menu_second_test_script" ]; then
+        menu_input_script=${menu_second_test_script}
+        menu_pass=3
+      else
+        testing=0
+      fi
+    else
+      if [ -n "$menu_third_test_script" ]; then
+        menu_input_script=${menu_third_test_script}
+      else
+        testing=0
+      fi
+    fi
+  fi
+  # now display/execute dialog accordingly
+  if [ "$testing" = "0" ]; then
+    value=$(dialog --clear --help-button --backtitle "${BRAND}" \
+        --title "[ M A I N - M E N U ]" \
+        --menu "${header_text[*]}" 17 50 7 \
+            "AWS"     "Configure Amazon ${cloud_providers[aws]}" \
+            "GKE"     "Configure Google ${cloud_providers[gke]}" \
+		    "Create"  "Create ${CLOUD_PROVIDER^^} Cluster" \
+            "Destroy" "Destroy ${CLOUD_PROVIDER^^} Cluster" \
+		    "View"    "View Cluster Address" \
+		    "Shell"   "Drop to the shell" \
+            "Exit"    "Exit this kiosk" \
             --output-fd 1 \
           )
+  else
+    value=$(dialog --clear --help-button --backtitle "${BRAND}" \
+        --title "[ M A I N - M E N U ]" \
+        --menu "${header_text[*]}" 17 50 7 \
+            "AWS"     "Configure Amazon ${cloud_providers[aws]}" \
+            "GKE"     "Configure Google ${cloud_providers[gke]}" \
+		    "Create"  "Create ${CLOUD_PROVIDER^^} Cluster" \
+            "Destroy" "Destroy ${CLOUD_PROVIDER^^} Cluster" \
+		    "View"    "View Cluster Address" \
+		    "Shell"   "Drop to the shell" \
+            "Exit"    "Exit this kiosk" \
+            --output-fd 1 \
+            --input-fd 3 3<${menu_input_script} \
+          )
+  fi
   retval $?
   echo $value
 }
-
 
 function configure_aws() {
   if [ -z "${NAMESPACE}" ]; then
@@ -276,6 +344,14 @@ function view() {
   read -p "Press enter to return to main menu"
 }
 
+
+function usage() {
+  clear
+  echo "No help written yet."
+  read -p "Press enter to return to main menu"
+}
+
+
 function main() {
   export MENU=true
   msgbox "Welcome!" \
@@ -308,5 +384,52 @@ https://vanvalenlab.caltech.edu"
 
   exit 0
 }
+
+
+
+### Execution begins here
+testing=0 #controls whether we take user input or feed in scripts, off by default
+greeting_test_script=
+menu_test_script=
+aws_test_script=
+gke_test_script=
+shell_test_script=
+menu_sceond_test_script=
+menu_third_test_script=
+menu_pass=1 # indicates which menu script should be executed
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -t | --testing )        testing=1
+                                ;;
+        -g | --greeting )       shift
+								greeting_test_script=$1
+                                ;;
+        -m | --menu )           shift
+								menu_test_script=$1
+                                ;;
+        -a | --awsconfig )      shift
+								aws_test_script=$1
+                                ;;
+        -g | --gkeconfig )      shift
+								gke_test_script=$1
+                                ;;
+        -s | --shellscript )    shift
+								shell_test_script=$1
+                                ;;
+        -mm | --menusecond )    shift
+								menu_second_test_script=$1
+                                ;;
+        -mmm | --menuthird )    shift
+								menu_third_test_script=$1
+                                ;;
+        -h | --help )           usage
+                                exit
+                                ;;
+        * )                     usage
+                                exit 1
+    esac
+    shift
+done
 
 [ -n "$MENU" ] || main
