@@ -30,7 +30,7 @@ releases:
       deployment_name: "autoscaler-deployment"
       replicas: 1
       image_name: "vanvalenlab/kiosk-autoscaler"
-      image_version: "code_cleanup"
+      image_version: "notebook_auto_run"
       container_name: "autoscaler-container"
       service_account_name: "autoscaler-service-account"
       env:
@@ -44,12 +44,14 @@ releases:
             {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "GPU_MAX_TIMES_THREE" | default 5 }}|1|deepcell|deployment|predict|redis-consumer-deployment;
             {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "GPU_MAX_TIMES_TWO" | default 5 }}|1|deepcell|deployment|predict|zip-consumer-deployment;
             {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "AWS_MAX_GPU_NODES" | default 5 }}|1|deepcell|deployment|predict|data-processing-deployment;
-            0|4|1|deepcell|job|train|training-job
+            0|4|1|deepcell|job|train|training-job;
+            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|job|notebook|runnotebook;
 {{ else }}
         AUTOSCALING: >
             {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|deployment|predict|tf-serving-deployment;
             {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_THREE" | default 5 }}|1|deepcell|deployment|predict|redis-consumer-deployment;
             {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_TWO" | default 5 }}|1|deepcell|deployment|predict|zip-consumer-deployment;
             {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|deployment|predict|data-processing-deployment;
-            0|4|1|deepcell|job|train|training-job
+            0|4|1|deepcell|job|train|training-job;
+            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|job|notebook|runnotebook;
 {{ end }}
