@@ -38,6 +38,8 @@ releases:
         INTERVAL: "5"
         REDIS_HOST: "redis-master"
         REDIS_PORT: "6379"
+        JOB_TYPE: "notebook"
+        UPLOAD_PREFIX: "input"
         CLOUD_PROVIDER: {{ env "CLOUD_PROVIDER" | default "broken_default" }}
 {{ if eq (env "CLOUD_PROVIDER" | default "aws") "aws" }}
         BUCKET: {{ env "BUCKET" | default "broken_default" }}

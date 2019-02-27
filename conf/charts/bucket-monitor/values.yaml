@@ -9,6 +9,8 @@ container_name: "bucket-monitor-container"
 env:
   DEBUG: "true"
   INTERVAL: 10
+  JOB_TYPE: "predict"
+  UPLOAD_PREFIX: "uploads"
   CLOUD_PROVIDER: "overwrite_this"
   BUCKET: "overwrite_this"
   REDIS_HOST: "overwrite_this"
