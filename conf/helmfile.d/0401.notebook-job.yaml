@@ -1,0 +1,57 @@
+helmDefaults:
+  args:
+    - "--wait"
+    - "--timeout=600"
+    - "--force"
+    - "--reset-values"
+
+releases:
+
+################################################################################
+## Training-Job ################################################################
+################################################################################
+
+#
+# References:
+#   - [web address of Helm chart's YAML file]
+#
+- name: "runnotebook"
+  namespace: "deepcell"
+  labels:
+    chart: "runnotebook-job"
+    component: "deepcell"
+    namespace: "deepcell"
+    vendor: "vanvalenlab"
+    default: "true"
+  chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/runnotebook-job'
+  version: "0.1.0"
+  values:
+    - app_name: "runnotebook"
+      parallelism: 1
+      image_name: "vanvalenlab/model-benchmarking"
+      image_tag: "0.1"
+      job_name: "runnotebook-job"
+      job_port: 7241
+      container_name: "runnotebook-container"
+      service_name: "runnotebook-service"
+      service_port: 7241
+      service_type: "ClusterIP"
+      nodeSelector:
+{{ if eq (env "CLOUD_PROVIDER" | default "aws") "aws" }}
+        beta.kubernetes.io/instance-type: '{{ env "AWS_GPU_MACHINE_TYPE" | default "p2.xlarge" }}'
+{{ else }}
+        cloud.google.com/gke-accelerator: '{{ env "GPU_TYPE" | default "nvidia-tesla-k80" }}'
+{{ end }}
+      env:
+        CLOUD_PROVIDER: '{{ env "CLOUD_PROVIDER" | default "aws" }}'
+        INPUT_PREFIX: "input"
+        OUTPUT_PREFIX: "output"
+        REDIS_HOST: "redis-master"
+        REDIS_PORT: "6379"
+        STATUS: "new"
+        GKE_COMPUTE_ZONE: '{{ env "GKE_COMPUTE_ZONE" | default "us-west1-b" }}'
+      secrets:
+        AWS_ACCESS_KEY_ID: '{{ env "AWS_ACCESS_KEY_ID" | default "NA" }}'
+        AWS_SECRET_ACCESS_KEY: '{{ env "AWS_SECRET_ACCESS_KEY" | default "NA" }}'
+        AWS_S3_BUCKET: '{{ env "AWS_S3_BUCKET" | default "NA" }}'
+        GKE_BUCKET: '{{ env "GKE_BUCKET" | default "NA" }}'
