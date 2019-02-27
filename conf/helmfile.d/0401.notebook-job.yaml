@@ -29,7 +29,7 @@ releases:
     - app_name: "runnotebook"
       parallelism: 1
       image_name: "vanvalenlab/model-benchmarking"
-      image_tag: "0.1"
+      image_tag: "latest"
       job_name: "runnotebook-job"
       job_port: 7241
       container_name: "runnotebook-container"
