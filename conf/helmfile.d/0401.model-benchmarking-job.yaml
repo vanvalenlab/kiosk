@@ -15,25 +15,25 @@ releases:
 # References:
 #   - [web address of Helm chart's YAML file]
 #
-- name: "runnotebook"
+- name: "model-benchmarking"
   namespace: "deepcell"
   labels:
-    chart: "runnotebook-job"
+    chart: "model-benchmarking-job"
     component: "deepcell"
     namespace: "deepcell"
     vendor: "vanvalenlab"
     default: "true"
-  chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/runnotebook-job'
+  chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/model-benchmarking'
   version: "0.1.0"
   values:
-    - app_name: "runnotebook"
+    - app_name: "model-benchmarking"
       parallelism: 1
       image_name: "vanvalenlab/model-benchmarking"
       image_tag: "latest"
-      job_name: "runnotebook-job"
+      job_name: "model-benchmarking-job"
       job_port: 7241
-      container_name: "runnotebook-container"
-      service_name: "runnotebook-service"
+      container_name: "model-benchmarking-container"
+      service_name: "model-benchmarking-service"
       service_port: 7241
       service_type: "ClusterIP"
       nodeSelector:

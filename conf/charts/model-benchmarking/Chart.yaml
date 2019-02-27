@@ -1,0 +1,20 @@
+apiVersion: v1
+name: model-benchmarking
+version: 0.1.0
+#kubeVersion: ^1.9.8
+description: This helm chart runs a model-benchmarking job.
+keywords:
+  - tensorflow
+  - deepcell-tf
+  - model-benchmarking
+home: https://www.github.com/vanvalenlab/model-benchmarking
+sources:
+    - https://hub.docker.com/vanvalenlab/model-benchmarking
+maintainers:
+  - name: Dylan Bannon
+    email: bbannon@caltech.edu
+    url: vanvalen.caltech.edu
+engine: gotpl
+appVersion: 0.1.0
+deprecated: false
+tillerVersion: ^2.9.1

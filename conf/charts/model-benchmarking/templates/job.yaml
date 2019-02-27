@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.job_name }}
+  labels:
+    app: {{ .Values.app_name }}
+spec:
+  parallelism: {{ .Values.parallelism }}
+  completions: 2147483647
+  template:
+    metadata:
+      name: {{ .Values.job_name }}
+      labels:
+        app: {{ .Values.app_name }}
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+{{- range $name, $value := .Values.nodeSelector }}
+{{- if not ( empty $value) }}
+        {{ $name }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: {{ .Values.container_name }}
+        image: {{ .Values.image_name }}:{{ .Values.image_tag }}
+        imagePullPolicy: "Always"
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        ports:
+        - containerPort: {{ .Values.job_port }}
+        env:
+{{- range $name, $value := .Values.env }}
+{{- if not ( empty $value) }}
+        - name: {{ $name }}
+          value: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{ $secrets_name := .Values.secrets_name }}
+{{- range $name, $value := .Values.secrets }}
+{{- if not ( empty $value) }}
+        - name: {{ $name }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ $secrets_name }}
+              key: {{ $name }}
+{{- end }}
+{{- end }}

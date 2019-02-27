@@ -1,0 +1,35 @@
+app_name: "model-benchmarking"
+
+# job.yaml
+parallelism: 0
+image_name: "vanvalenlab/model-benchmarking"
+image_tag: "latest"
+job_name: "model-benchmarking-job"
+job_port: 7241
+container_name: "model-benchmarking-container"
+
+# service.yaml
+service_name: "model-benchmarking-service"
+service_port: 7241
+service_type: "ClusterIP"
+
+nodeSelector:
+  #  cloud.google.com/gke-accelerator: "nvidia-tesla-k80"
+  #  beta.kubernetes.io/instance-type: "p2.xlarge"
+
+# secrets.yaml and hemlfile.d/model-benchmarking.yaml
+env:
+  CLOUD_PROVIDER: "aws"
+  DEBUG: "True"
+  INPUT_PREFIX: "input"
+  OUTPUT_PREFIX: "output"
+  REDIS_HOST: "redis-master"
+  REDIS_PORT: "6379"
+  STATUS: "new"
+
+secrets_name: "model-benchmarking-env-variables"
+secrets:
+  AWS_ACCESS_KEY_ID: "change_me"
+  AWS_SECRET_ACCESS_KEY: "change_me"
+  AWS_S3_BUCKET: "change_me"
+  GCLOUD_STORAGE_BUCKET: "change_me"
