@@ -23,7 +23,7 @@ releases:
     namespace: "deepcell"
     vendor: "vanvalenlab"
     default: "true"
-  chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/notebook-monitor'
+  chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/bucket-monitor'
   version: "0.1.0"
   values:
     - app_name: "notebook-monitor"
