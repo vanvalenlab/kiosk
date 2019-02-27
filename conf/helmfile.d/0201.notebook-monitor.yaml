@@ -1,0 +1,46 @@
+helmDefaults:
+  args:
+    - "--wait"
+    - "--timeout=600"
+    - "--force"
+    - "--reset-values"
+
+releases:
+
+################################################################################
+## AutoScaler ################################################################
+################################################################################
+
+#
+# References:
+#   - [web address of Helm chart's YAML file]
+#
+- name: "notebook-monitor"
+  namespace: "deepcell"
+  labels:
+    chart: "notebook-monitor"
+    component: "notebook-monitor"
+    namespace: "deepcell"
+    vendor: "vanvalenlab"
+    default: "true"
+  chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/notebook-monitor'
+  version: "0.1.0"
+  values:
+    - app_name: "notebook-monitor"
+      deployment_name: "notebook-monitor-deployment"
+      replicas: 1
+      image_name: "vanvalenlab/kiosk-bucket-monitor"
+      image_version: "notebook_auto_run"
+      container_name: "notebook-monitor-container"
+      service_account_name: "notebook-monitor-service-account"
+      env:
+        DEBUG: "true"
+        INTERVAL: "5"
+        REDIS_HOST: "redis-master"
+        REDIS_PORT: "6379"
+        CLOUD_PROVIDER: {{ env "CLOUD_PROVIDER" | default "broken_default" }}
+{{ if eq (env "CLOUD_PROVIDER" | default "aws") "aws" }}
+        BUCKET: {{ env "BUCKET" | default "broken_default" }}
+{{ else }}
+        BUCKET: {{ env "GKE_BUCKET" | default "broken_default" }}
+{{ end }}
