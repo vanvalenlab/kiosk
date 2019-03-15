@@ -41,17 +41,15 @@ releases:
 {{ if eq (env "CLOUD_PROVIDER" | default "aws") "aws" }}
         AUTOSCALING: >
             {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "AWS_MAX_GPU_NODES" | default 5 }}|1|deepcell|deployment|predict|tf-serving-deployment;
-            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "GPU_MAX_TIMES_THREE" | default 5 }}|1|deepcell|deployment|predict|redis-consumer-deployment;
-            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "GPU_MAX_TIMES_TWO" | default 5 }}|1|deepcell|deployment|predict|zip-consumer-deployment;
-            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "AWS_MAX_GPU_NODES" | default 5 }}|1|deepcell|deployment|predict|data-processing-deployment;
-            0|4|1|deepcell|job|train|training-job;
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|job|notebook|model-benchmarking-job;
+            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|redis-consumer-deployment;
+            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "AWS_MAX_GPU_NODES" | default 5 }}|1|deepcell|deployment|predict|zip-consumer-deployment;
+            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|data-processing-deployment;
+            0|4|1|deepcell|job|train|training-job
 {{ else }}
         AUTOSCALING: >
             {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|deployment|predict|tf-serving-deployment;
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_THREE" | default 5 }}|1|deepcell|deployment|predict|redis-consumer-deployment;
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_TWO" | default 5 }}|1|deepcell|deployment|predict|zip-consumer-deployment;
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|deployment|predict|data-processing-deployment;
-            0|4|1|deepcell|job|train|training-job;
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|job|notebook|model-benchmarking-job;
+            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|redis-consumer-deployment;
+            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|deployment|predict|zip-consumer-deployment;
+            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|data-processing-deployment;
+            0|4|1|deepcell|job|train|training-job
 {{ end }}

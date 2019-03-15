@@ -34,6 +34,8 @@ releases:
       container_name: "benchmarking-container"
       service_account_name: "benchmarking-service-account"
       env:
+        REDIS_HOST: "redis-master"
+        REDIS_PORT: "6379"
         BENCHMARKING_PU_TYPE_AND_NUMBER: '{{ env "BENCHMARKING_PU_TYPE_AND_NUMBER" | default "NA" }}'
         BENCHMARKING_PU_TYPE: '{{ env "BENCHMARKING_PU_TYPE" | default "NA" }}'
         IMG_NUM: '{{ env "IMG_NUM" | default "0" }}'

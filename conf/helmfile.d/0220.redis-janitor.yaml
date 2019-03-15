@@ -1,0 +1,40 @@
+helmDefaults:
+  args:
+    - "--wait"
+    - "--timeout=600"
+    - "--force"
+    - "--reset-values"
+
+releases:
+
+################################################################################
+## AutoScaler ################################################################
+################################################################################
+
+#
+# References:
+#   - [web address of Helm chart's YAML file]
+#
+- name: "redis-janitor"
+  namespace: "deepcell"
+  labels:
+    chart: "redis-janitor"
+    component: "redis-janitor"
+    namespace: "deepcell"
+    vendor: "vanvalenlab"
+    default: "true"
+  chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/redis-janitor'
+  version: "0.1.0"
+  values:
+    - app_name: "redis-janitor"
+      deployment_name: "redis-janitor-deployment"
+      replicas: 1
+      image_name: "vanvalenlab/kiosk-redis-janitor"
+      image_version: "dev"
+      container_name: "redis-janitor-container"
+      service_account_name: "redis-janitor-service-account"
+      env:
+        DEBUG: "true"
+        INTERVAL: "5"
+        REDIS_HOST: "redis-master"
+        REDIS_PORT: "6379"

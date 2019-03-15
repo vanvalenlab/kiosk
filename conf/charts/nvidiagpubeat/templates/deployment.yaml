@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment_name }}
+  labels:
+    app: {{ .Values.app_name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app_name }}
+    spec:
+      restartPolicy: "Always"
+      nodeSelector:
+{{- range $name, $value := .Values.nodeSelector }}
+{{- if not ( empty $value) }}
+        {{ $name }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: {{ .Values.container_name }}
+        image: {{ .Values.image_name }}:{{ .Values.image_version }}
+        imagePullPolicy: "Always"
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        ports:
+        - containerPort: {{ .Values.deployment_port }}
+        env:
+{{- range $name, $value := .Values.env }}
+{{- if not ( empty $value) }}
+        - name: {{ $name }}
+          value: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- range $name, $value := .Values.secrets }}
+{{- if not ( empty $value) }}
+        - name: {{ $name }}
+          valueFrom:
+            secretKeyRef:
+              name: tf-serving-env-variables
+              key: {{ $name }}
+{{- end }}
+{{- end }}

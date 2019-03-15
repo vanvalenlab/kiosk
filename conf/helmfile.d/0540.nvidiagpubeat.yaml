@@ -1,0 +1,54 @@
+helmDefaults:
+  args:
+    - "--wait"
+    - "--timeout=600"
+    - "--force"
+    - "--reset-values"
+
+releases:
+
+################################################################################
+## Tensorflow-Serving ##########################################################
+################################################################################
+
+#
+# References:
+#   - [web address of Helm chart's YAML file]
+#
+- name: "nvidiagpubeat"
+  namespace: "deepcell"
+  labels:
+    chart: "nvidiagpubeat"
+    component: "deepcell"
+    namespace: "deepcell"
+    vendor: "vanvalenlab"
+    default: "true"
+  chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/nvidiagpubeat'
+  version: "0.1.0"
+  values:
+    - app_name: "nvidiagpubeat"
+      replicas: 0
+      image_name: "vanvalenlab/nvidiagpubeat"
+      image_version: "dev"
+      deployment_name: "nvidiagpubeat-deployment"
+      deployment_port: 8500
+      container_name: "nvidiagpubeat-container"
+      service_name: "nvidiagpubeat-service"
+      service_port: 8500
+      service_type: "ClusterIP"
+      nodeSelector:
+{{ if eq (env "CLOUD_PROVIDER" | default "aws") "aws" }}
+        beta.kubernetes.io/instance-type: '{{ env "AWS_GPU_MACHINE_TYPE" | default "p2.xlarge" }}'
+{{ else }}
+        cloud.google.com/gke-accelerator: '{{ env "GPU_TYPE" | default "nvidia-tesla-k80" }}'
+        cloud.google.com/gke-preemptible: "true"
+{{ end }}
+      env:
+        RPC_PORT: "8500"
+        REST_PORT: "8501"
+        REST_TIMEOUT: "90000"
+        MODEL_PREFIX: "models"
+        TF_SERVING_CONFIG_FILE: "/kiosk/nvidiagpubeat/models.conf"
+        CLOUD_PROVIDER: '{{ env "CLOUD_PROVIDER" | default "aws" }}'
+        LOG_LEVEL: "3"
+        DEBUG: "FALSE"

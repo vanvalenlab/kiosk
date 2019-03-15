@@ -1,0 +1,19 @@
+app_name: "redis-janitor"
+
+# deployment.yaml
+deployment_name: "redis-janitor-deployment"
+replicas: 1
+image_name: "vanvalenlab/kiosk-redis-janitor"
+image_version: "latest"
+container_name: "redis-janitor-container"
+env:
+  DEBUG: "true"
+  INTERVAL: 10
+  CLOUD_PROVIDER: "overwrite_this"
+  BUCKET: "overwrite_this"
+  REDIS_HOST: "overwrite_this"
+  REDIS_PORT: "specify_me"
+
+service_account:
+  name: "redis-janitor-service-account"
+

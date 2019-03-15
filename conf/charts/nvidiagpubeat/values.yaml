@@ -1,0 +1,30 @@
+app_name: "nvidiagpubeat"
+
+# deployment.yaml
+replicas: 0
+image_name: "vanvalenlab/nvidiagpubeat"
+image_version: latest""
+deployment_name: "nvidiagpubeat-deployment"
+deployment_port: 8501
+container_name: "nvidiagpubeat-container"
+
+# service.yaml
+service_name: "nvidiagpubeat-service"
+service_port: 1337
+service_type: "ClusterIP"
+
+nodeSelector:
+  #  cloud.google.com/gke-accelerator: "nvidia-tesla-k80"
+  #  beta.kubernetes.io/instance-type: "p2.xlarge"
+  #  cloud.google.com/gke-preemptible: "true"
+
+# secrets.yaml and hemlfile.d/frontend.yaml
+env:
+  RPC_PORT: "8500"
+  REST_PORT: "8501"
+  REST_TIMEOUT: "180000"
+  MODEL_PREFIX: "models"
+  CLOUD_PROVIDER: "aws"
+  TF_SERVING_CONFIG_FILE: "/kiosk/nvidiagpubeat/models.conf"
+  LOG_LEVEL: "3"
+  DEBUG: "FALSE"
