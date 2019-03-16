@@ -51,5 +51,6 @@ releases:
             {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|redis-consumer-deployment;
             {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|deployment|predict|zip-consumer-deployment;
             {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|data-processing-deployment;
-            0|4|1|deepcell|job|train|training-job
+            0|4|1|deepcell|job|train|training-job;
+            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|job|notebook|model-benchmarking-job;
 {{ end }}
