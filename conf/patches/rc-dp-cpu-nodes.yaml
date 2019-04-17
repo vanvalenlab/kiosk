@@ -1,0 +1,39 @@
+spec:
+  machineType: n1-highcpu-4
+  nodeLabels:
+    rc_dp=yes
+  taints:
+  - rc_dp=yes=:NoSchedule
+  hooks:
+  # Before is just advisory; `docker-healthcheck.service` appears to get started by `kops-configuration.service`
+  - before:
+    - docker.service
+    - docker-healthcheck.service
+    manifest: |
+      Type=oneshot
+      ExecStart=/bin/bash -c '/usr/bin/curl -L -S -f https://raw.githubusercontent.com/vanvalenlab/kiosk/master/scripts/nvidia-docker-installer.sh | /bin/bash -x'
+    name: nvidia-docker-install.service
+  minSize: 1
+  maxSize: $NODE_MAX_SIZE
+  zones: $ZONES
+  # https://github.com/kubernetes/autoscaler/issues/903#issuecomment-392885606
+  kubelet:
+    featureGates:
+      DevicePlugins: "true"
+
+	gcloud container node-pools create rc-dp-cpu \
+		--cluster $(CLUSTER_NAME) \
+		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
+		--region $(GKE_COMPUTE_REGION) \
+		--num-nodes 1 \
+		--min-nodes 1 \
+		--max-nodes ${NODE_MAX_SIZE} \
+		--machine-type=n1-highcpu-4 \
+		--enable-autoscaling \
+		--enable-autorepair \
+		--no-enable-autoupgrade \
+		--preemptible \
+		--node-labels rc_dp=yes \
+		--node-taints rc_dp=yes:NoSchedule \
+		|| echo "Elasticsearch CPU node pool creation failed."
+

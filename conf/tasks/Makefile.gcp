@@ -286,15 +286,117 @@ gke/destroy/all: \
 
 
 
+## Prep the kiosk for cluster creation
+gcp/prep:
+	@echo "Prepping the kiosk for cluster creation..."
+	apk add gettext
+	@echo "Kiosk prepped for cluster creation."
+	@echo " "
+
+## Create SSH key for Kops cluster
+gcp/create/ssh-key:
+	@if [ ! -d "$(CACHE_PATH)" ]; \
+	then \
+	    echo "It looks like you haven't run a cloud provider configuration yet."; \
+	    echo "At the very least the CACHE_PATH directory, " $(CACHE_PATH) ", does not exist."; \
+	    exit 1; \
+	fi
+	@echo "Generating public/private RSA key pair..."
+	@ssh-keygen -t rsa -f $(SSH_KEY) -N "" || echo "Nevermind. The keys probably already exist."
+	@echo " "
+	@echo " "
+
+## Create bucket used by deepcell
+# Project name must be globally unique
+export CLOUDSDK_CORE_PROJECT ?= $(PROJECT)
+gke/create/bucket:
+	@echo "Creating Google Cloud Storage Bucket ${CLOUDSDK_CORE_PROJECT}..."
+	@gsutil mb -p $(PROJECT) $(KOPS_STATE_STORE) \
+		|| echo "Bucket ${CLOUDSDK_CODE_PROJECT} already exists. No need to create that bucket."
+	@-gsutil acl ch -u $(GKE_NODE_SERVICE_ACCOUNT_EMAIL):O gs://$(CLOUDSDK_BUCKET)
+	@echo "Google Cloud Storage Bucket creation finished."
+	@echo " "
+	@echo " "
+
+## Provision kops cluster
+kops/create/cluster:
+	@echo "Requisitioning cloud resources using kops (Kubernetes Operations)..."
+	@echo "Using the following command:"
+	@kops create cluster \
+	  --name $(KOPS_CLUSTER_NAME) \
+	  --zones $(KOPS_AVAILABILITY_ZONES) \
+	  --cloud $(CLOUD_PROVIDER)  \
+	  --master-size $(MASTER_MACHINE_TYPE) \
+	  --node-size $(NODE_MACHINE_TYPE) \
+	  --ssh-public-key $(SSH_PUBLIC_KEY) \
+	  --yes \
+	  || echo "Well, I guess this cluster already exists, so we're not recreating it."
+	@echo "Cloud resource requisition finished."
+	@echo " "
+	@echo " "
+
+  # Create cluster in GCE.
+  # This is an alpha feature.
+  gcloud auth application-default login
+  export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your-project-credentials.json
+  export KOPS_STATE_STORE="gs://mybucket-kops"
+  export ZONES=${MASTER_ZONES:-"us-east1-b,us-east1-c,us-east1-d"}
+  export KOPS_FEATURE_FLAGS=AlphaAllowGCE
+  export KOPS_CLUSTER_NAME=amazing-96.k8s.local
+  export KOPS_FEATURE_FLAGS=AlphaAllowGCE
+
+  kops create cluster
+  --zones $ZONES \
+  --master-zones $ZONES \
+  --node-count 3
+  --project my-gce-project \
+  --image "ubuntu-os-cloud/ubuntu-1604-xenial-v20170202" \
+  --yes
+
+
+
+
+
+gcp/patch:
+	@echo "Briefly restarting the AWS cluster in order to add some necessary permissions to it..."
+	@kops get cluster -o yaml > /tmp/cluster-template.yaml
+	@yq merge -x /tmp/cluster-template.yaml patches/aws.yaml > /tmp/cluster.yaml
+	@envsubst <  /tmp/cluster.yaml > /tmp/cluster-envsubst.yaml
+	@kops replace -f /tmp/cluster-envsubst.yaml
+	@kops update cluster --yes || echo "Restart and update didn't happen."
+	@echo "Permission addition finished."
+	@echo
+	@echo " "
+
+## Provision GPU instance group
+# export GPU_NODES_EXIST=$(kops get ig | grep 'gpu-nodes')
+gcp/create/rc-dp-nodes: RCDP_NODES_EXIST = $(shell sh -c "kops get ig | grep 'rc-dp-cpu-nodes'" )
+gcp/create/rc-dp-nodes:
+	@echo "Creating GPU node pool."
+	@echo "(Not requisitioning GPUs now, just granting Kubernetes the ability to get them once they're needed.)"
+	@if [[ -z "${RCDP`_NODES_EXIST}" ]]; then \
+		kops create ig rc-dp-cpu-nodes -o yaml --dry-run > /tmp/rc-dp-cpu-nodes-template.yaml; \
+		yq merge -x /tmp/rc-dp-cpu-nodes-template.yaml patches/rc-dp-cpu-nodes.yaml > /tmp/rc-dp-cpu-nodes.yaml; \
+		envsubst <  /tmp/rc-dp-cpu-nodes.yaml  > /tmp/rc-dp-cpu-nodes-envsubst.yaml; \
+		kops create -f /tmp/rc-dp-gpu-nodes-envsubst.yaml; \
+		kops update cluster --yes; \
+	else \
+		echo "GPU node pool already exists. Moving on."; \
+	fi
+	@echo "GPU node pool creation finished."
+	@echo " "
+	@echo " "
+
 
 
 ## Provision all kops resources
 gcp/create/all: \
   gcp/prep \
   gcp/create/ssh-key \
+  gcp/create/bucket \
   gcp/create/cluster \
-  gcp/create/$(CLOUD_PROVIDER) \
   gcp/create/gpu-nodes 
+  #gcp/patch \
 	@echo "Kops created"
 	@echo " "
 
