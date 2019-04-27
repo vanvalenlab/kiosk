@@ -13,9 +13,15 @@ service_name: "model-benchmarking-service"
 service_port: 7241
 service_type: "ClusterIP"
 
+annotations:
+  # tf-version.cloud-tpus.google.com: "1.9"
+
 nodeSelector:
   #  cloud.google.com/gke-accelerator: "nvidia-tesla-k80"
   #  beta.kubernetes.io/instance-type: "p2.xlarge"
+
+limits:
+  # cloud-tpus.google.com/v2: 8
 
 # secrets.yaml and hemlfile.d/model-benchmarking.yaml
 env:

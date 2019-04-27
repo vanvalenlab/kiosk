@@ -12,6 +12,13 @@ spec:
       name: {{ .Values.job_name }}
       labels:
         app: {{ .Values.app_name }}
+      annotations:
+        {{- range $name, $value := .Values.annotations }}
+        {{- if not ( empty $value) }}
+                {{ $name }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+
     spec:
       restartPolicy: Never
       nodeSelector:
@@ -30,7 +37,12 @@ spec:
         imagePullPolicy: "Always"
         resources:
           limits:
-            nvidia.com/gpu: 1
+            # nvidia.com/gpu: 1
+            {{- range $name, $value := .Values.limits }}
+            {{- if not ( empty $value) }}
+                    {{ $name }}: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
         ports:
         - containerPort: {{ .Values.job_port }}
         env:
