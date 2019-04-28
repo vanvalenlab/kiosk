@@ -253,62 +253,39 @@ function configure_gke() {
       "Would you like to use GPUs or TPUs in your cluster?" \
       $total_lines 60 2 "GPUs ON TPUs OFF")
 
-
   export CLOUD_PROVIDER=gke
 
-  # create some derivative GPU-related variables for use in autoscaling
-  export GPU_MAX_TIMES_TWO=$(($GPU_NODE_MAX_SIZE*2))
-  export GPU_MAX_TIMES_THREE=$(($GPU_NODE_MAX_SIZE*3))
-  export GPU_MAX_TIMES_FOUR=$(($GPU_NODE_MAX_SIZE*4))
-  export GPU_MAX_TIMES_FIVE=$(($GPU_NODE_MAX_SIZE*5))
-  export GPU_MAX_TIMES_TEN=$(($GPU_NODE_MAX_SIZE*10))
-
-  gke_gpu_config
-  export CLOUD_PROVIDER=gke
-  make create_cache_path
-  printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
-  printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
-    -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
-    -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
-    -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
-    -e GPU_NODE_MAX_SIZE \
-    -e GPU_MAX_TIMES_TWO \
-    -e GPU_MAX_TIMES_THREE \
-    -e GPU_MAX_TIMES_FOUR \
-    -e GPU_MAX_TIMES_FIVE \
-    -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
-
-  # if [ "$GPUS_OR_TPUS" = "GPUs" ]; then
-  #   gke_gpu_config
-  #   export CLOUD_PROVIDER=gke
-  #   make create_cache_path
-  #   printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
-  #   printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
-  #     -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
-  #     -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
-  #     -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
-  #     -e GPU_NODE_MAX_SIZE \
-  #     -e GPU_MAX_TIMES_TWO \
-  #     -e GPU_MAX_TIMES_THREE \
-  #     -e GPU_MAX_TIMES_FOUR \
-  #     -e GPU_MAX_TIMES_FIVE \
-  #     -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
-  # elif [ "$GPUS_OR_TPUS" = "TPUs"]; then
-  #   gke_tpu_config
-  #   export CLOUD_PROVIDER=gke
-  #   make create_cache_path
-  #   printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
-  #   printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
-  #     -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
-  #     -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
-  #     -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
-  #     -e GPU_NODE_MAX_SIZE \
-  #     -e GPU_MAX_TIMES_TWO \
-  #     -e GPU_MAX_TIMES_THREE \
-  #     -e GPU_MAX_TIMES_FOUR \
-  #     -e GPU_MAX_TIMES_FIVE \
-  #     -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
-  # fi
+  if [ "$GPUS_OR_TPUS" = "GPUs" ]; then
+    gke_gpu_config
+    export CLOUD_PROVIDER=gke
+    make create_cache_path
+    printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
+    printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
+      -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
+      -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
+      -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
+      -e GPU_NODE_MAX_SIZE \
+      -e GPU_MAX_TIMES_TWO \
+      -e GPU_MAX_TIMES_THREE \
+      -e GPU_MAX_TIMES_FOUR \
+      -e GPU_MAX_TIMES_FIVE \
+      -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
+  elif [ "$GPUS_OR_TPUS" = "TPUs"]; then
+    gke_tpu_config
+    export CLOUD_PROVIDER=gke
+    make create_cache_path
+    printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
+    printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
+      -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
+      -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
+      -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
+      -e GPU_NODE_MAX_SIZE \
+      -e GPU_MAX_TIMES_TWO \
+      -e GPU_MAX_TIMES_THREE \
+      -e GPU_MAX_TIMES_FOUR \
+      -e GPU_MAX_TIMES_FIVE \
+      -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
+  fi
 }
 
 function gke_gpu_config() {
@@ -338,14 +315,22 @@ function gke_gpu_config() {
   if [ "$GPU_NODE_MAX_SIZE" = "" ]; then
 	  return 0
   fi
+
+  # create some derivative GPU-related variables for use in autoscaling
+  export GPU_MAX_TIMES_TWO=$(($GPU_NODE_MAX_SIZE*2))
+  export GPU_MAX_TIMES_THREE=$(($GPU_NODE_MAX_SIZE*3))
+  export GPU_MAX_TIMES_FOUR=$(($GPU_NODE_MAX_SIZE*4))
+  export GPU_MAX_TIMES_FIVE=$(($GPU_NODE_MAX_SIZE*5))
+  export GPU_MAX_TIMES_TEN=$(($GPU_NODE_MAX_SIZE*10))
 }
 
 function gke_tpu_config() {
   gcloud config set project ${PROJECT}
-  export GPU_MACHINE_TYPE=$(inputbox "Google Cloud" "TPU Node Type" "${GPU_MACHINE_TYPE:-n1-standard-4}")
-  if [ "$GPU_MACHINE_TYPE" = "" ]; then
-	  return 0
-  fi
+  # export GPU_MACHINE_TYPE=$(inputbox "Google Cloud" "TPU Node Type" "${GPU_MACHINE_TYPE:-n1-standard-4}")
+  # if [ "$GPU_MACHINE_TYPE" = "" ]; then
+	#   return 0
+  # fi
+  export GPU_MACHINE_TYPE=N1-STANDARD-4
   export GPU_TYPE=nvidia-tesla-k80
   export GPU_PER_NODE=1
   export GPU_NODE_MIN_SIZE=0
