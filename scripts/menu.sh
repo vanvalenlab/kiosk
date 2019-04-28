@@ -249,8 +249,9 @@ function configure_gke() {
 
   local base_box_height=7
   local total_lines=$(($base_box_height+2))
-  export GPUS_OR_TPUS=$(radiobox "Google Cloud" "Would you like to use GPUs or TPUs in your cluster?" \
-      $total_lines 60 2 "GPUs _ ON TPUs _ OFF")
+  export GPUS_OR_TPUS=$(radiobox "Google Cloud" \
+      "Would you like to use GPUs or TPUs in your cluster?" \
+      $total_lines 60 2 "GPUs ON TPUs OFF")
 
 
   export CLOUD_PROVIDER=gke
