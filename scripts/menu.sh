@@ -262,37 +262,52 @@ function configure_gke() {
   export GPU_MAX_TIMES_FIVE=$(($GPU_NODE_MAX_SIZE*5))
   export GPU_MAX_TIMES_TEN=$(($GPU_NODE_MAX_SIZE*10))
 
-  if [ "$GPUS_OR_TPUS" = "GPUs" ]; then
-    gke_gpu_config
-    export CLOUD_PROVIDER=gke
-    make create_cache_path
-    printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
-    printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
-      -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
-      -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
-      -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
-      -e GPU_NODE_MAX_SIZE \
-      -e GPU_MAX_TIMES_TWO \
-      -e GPU_MAX_TIMES_THREE \
-      -e GPU_MAX_TIMES_FOUR \
-      -e GPU_MAX_TIMES_FIVE \
-      -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
-  elif [ "$GPUS_OR_TPUS" = "TPUs"]; then
-    gke_tpu_config
-    export CLOUD_PROVIDER=gke
-    make create_cache_path
-    printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
-    printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
-      -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
-      -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
-      -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
-      -e GPU_NODE_MAX_SIZE \
-      -e GPU_MAX_TIMES_TWO \
-      -e GPU_MAX_TIMES_THREE \
-      -e GPU_MAX_TIMES_FOUR \
-      -e GPU_MAX_TIMES_FIVE \
-      -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
-  fi
+  gke_gpu_config
+  export CLOUD_PROVIDER=gke
+  make create_cache_path
+  printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
+  printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
+    -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
+    -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
+    -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
+    -e GPU_NODE_MAX_SIZE \
+    -e GPU_MAX_TIMES_TWO \
+    -e GPU_MAX_TIMES_THREE \
+    -e GPU_MAX_TIMES_FOUR \
+    -e GPU_MAX_TIMES_FIVE \
+    -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
+
+  # if [ "$GPUS_OR_TPUS" = "GPUs" ]; then
+  #   gke_gpu_config
+  #   export CLOUD_PROVIDER=gke
+  #   make create_cache_path
+  #   printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
+  #   printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
+  #     -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
+  #     -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
+  #     -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
+  #     -e GPU_NODE_MAX_SIZE \
+  #     -e GPU_MAX_TIMES_TWO \
+  #     -e GPU_MAX_TIMES_THREE \
+  #     -e GPU_MAX_TIMES_FOUR \
+  #     -e GPU_MAX_TIMES_FIVE \
+  #     -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
+  # elif [ "$GPUS_OR_TPUS" = "TPUs"]; then
+  #   gke_tpu_config
+  #   export CLOUD_PROVIDER=gke
+  #   make create_cache_path
+  #   printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
+  #   printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
+  #     -e GKE_COMPUTE_REGION -e GKE_COMPUTE_ZONE \
+  #     -e GKE_MACHINE_TYPE -e GPU_TYPE -e GPU_PER_NODE \
+  #     -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
+  #     -e GPU_NODE_MAX_SIZE \
+  #     -e GPU_MAX_TIMES_TWO \
+  #     -e GPU_MAX_TIMES_THREE \
+  #     -e GPU_MAX_TIMES_FOUR \
+  #     -e GPU_MAX_TIMES_FIVE \
+  #     -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.gke
+  # fi
 }
 
 function gke_gpu_config() {
