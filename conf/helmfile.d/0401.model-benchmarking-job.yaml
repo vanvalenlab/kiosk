@@ -29,7 +29,7 @@ releases:
     - app_name: "model-benchmarking"
       annotations:
 {{ if eq (env "CLOUD_PROVIDER" | default "aws") "gke" }}
-  {{ if eq (env "GPUS_OR_TPUS" | "GPUs") "TPUs" }}
+  {{ if eq (env "GPUS_OR_TPUS" | default "GPUs") "TPUs" }}
         tf-version.cloud-tpus.google.com: "1.9"
   {{ end }}
 {{ end }}
@@ -46,13 +46,13 @@ releases:
 {{ if eq (env "CLOUD_PROVIDER" | default "aws") "aws" }}
         beta.kubernetes.io/instance-type: '{{ env "AWS_GPU_MACHINE_TYPE" | default "p2.xlarge" }}'
 {{ else }}
-  {{ if eq (env "GPUS_OR_TPUS" | "GPUs") "GPUs" }}
+  {{ if eq (env "GPUS_OR_TPUS" | default "GPUs") "GPUs" }}
         cloud.google.com/gke-accelerator: '{{ env "GPU_TYPE" | default "nvidia-tesla-k80" }}'
   {{ end }}
 {{ end }}
       limits:
 {{ if eq (env "CLOUD_PROVIDER" | default "aws") "gke" }}
-  {{ if eq (env "GPUS_OR_TPUS" | "GPUs") "TPUs" }}
+  {{ if eq (env "GPUS_OR_TPUS" | default "GPUs") "TPUs" }}
         cloud-tpus.google.com/v2: 8
   {{ end }}
 {{ end }}
