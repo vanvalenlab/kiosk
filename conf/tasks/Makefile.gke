@@ -81,7 +81,7 @@ gke/create/cluster:
 	@echo "Using the following command: "
 	gcloud container clusters create $(CLUSTER_NAME) \
 		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
-		--region=$(GKE_COMPUTE_REGION) \
+		--zone=$(GKE_COMPUTE_ZONE) \
 		--node-locations=$(GKE_COMPUTE_ZONE) \
 		--max-nodes=$(NODE_MAX_SIZE) \
 		--min-nodes=$(NODE_MIN_SIZE) \
@@ -135,7 +135,7 @@ gke/create/gpus:
 	gcloud beta container node-pools create gpu \
 		--accelerator type=$(GPU_TYPE),count=$(GPU_PER_NODE) \
 		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
-		--region $(GPU_COMPUTE_REGION) \
+		--zone=$(GKE_COMPUTE_ZONE) \
 		--cluster $(CLUSTER_NAME) \
 		--num-nodes $(GPU_NODE_MIN_SIZE) \
 		--min-nodes $(GPU_NODE_MIN_SIZE) \
@@ -188,6 +188,8 @@ gke/create/bucket:
 	@gsutil mb -p $(CLOUDSDK_CORE_PROJECT) gs://$(CLOUDSDK_BUCKET) \
 		|| echo "Bucket ${CLOUDSDK_CODE_PROJECT} already exists. No need to create that bucket."
 	@-gsutil acl ch -u $(GKE_NODE_SERVICE_ACCOUNT_EMAIL):O gs://$(CLOUDSDK_BUCKET)
+	@gsutil acl ch -u $(GKE_NODE_SERVICE_ACCOUNT_EMAIL):READER gs://$(CLOUDSDK_BUCKET)
+	@gsutil acl ch -u $(GKE_NODE_SERVICE_ACCOUNT_EMAIL):WRITER gs://$(CLOUDSDK_BUCKET)
 	@echo "Google Cloud Storage Bucket creation finished."
 	@echo " "
 	@echo " "
