@@ -49,29 +49,6 @@ gke/create/project:
 gke/destroy/project:
 	@gcloud projects delete $(CLOUDSDK_CORE_PROJECT)
 
-## Create a new GKE cluster with TPUs enabled
-gke/create/cluster/tpu:
-	@echo "Creating GKE cluster..."
-	@echo "Using the following command: "
-	@gcloud components install beta --quiet
-	@gcloud config set project ${PROJECT}
-	@gcloud config set compute/zone ${GKE_COMPUTE_ZONE}
-	gcloud beta container clusters create $(CLUSTER_NAME) \
-		--zone=$(GKE_COMPUTE_ZONE) \
-		--max-nodes=$(NODE_MAX_SIZE) \
-		--min-nodes=$(NODE_MIN_SIZE) \
-		--machine-type=$(GKE_MACHINE_TYPE) \
-		--cluster-version $(KUBERNETES_VERSION) \
-		--enable-autoscaling \
-		--enable-autoupgrade \
-		--scopes=cloud-platform \
-		--enable-ip-alias \
-		--enable-tpu \
-		|| echo "Apparently, the cluster already exists."
-	@echo "GKE cluster creation complete."
-	@echo " "
-	@echo " "
-
 ## Create a new GKE cluster
 	#gcloud container clusters upgrade ${CLUSTER_NAME} --quiet --master \
 	#	--zone=${GKE_COMPUTE_ZONE} \
@@ -94,11 +71,42 @@ gke/create/cluster:
 	@echo " "
 	@echo " "
 
+## Create a new GKE cluster with TPUs enabled
+gke/create/cluster/tpu:
+	@echo "Creating TPU cluster..."
+	@echo "Using the following command: "
+	@gcloud components install beta --quiet
+	@gcloud config set project ${PROJECT}
+	@gcloud config set compute/zone ${GKE_COMPUTE_ZONE}
+	gcloud beta container clusters create tpu \
+		--zone=$(GKE_COMPUTE_ZONE) \
+		--max-nodes=$(NODE_MAX_SIZE) \
+		--min-nodes=$(NODE_MIN_SIZE) \
+		--machine-type=$(GKE_MACHINE_TYPE) \
+		--cluster-version $(KUBERNETES_VERSION) \
+		--enable-autoscaling \
+		--enable-autoupgrade \
+		--scopes=cloud-platform \
+		--enable-ip-alias \
+		--enable-tpu \
+		|| echo "Apparently, the cluster already exists."
+	@echo "GKE cluster creation complete."
+	@echo " "
+	@echo " "
+
 ## Destroy GKE cluster
 gke/destroy/cluster:
 	@echo "Destroying cluster..."
 	@-gcloud container clusters --region $(GKE_COMPUTE_REGION) delete $(CLUSTER_NAME) --quiet
 	@echo "Cluster destruction finished."
+	@echo " "
+	@echo " "
+
+## Destroy GKE GPU node pool
+gke/destroy/tpus:
+	@echo "Destroying TPU node pool..."
+	@-gcloud container node-pools delete tpu --quiet --region $(GPU_COMPUTE_REGION)
+	@echo "TPU node pool destruction finished."
 	@echo " "
 	@echo " "
 
@@ -225,6 +233,7 @@ gke/deploy/nvidia:
 ## Create Cluster
 gke/create/all: \
 	gke/create/service-account \
+	gke/create/cluster \
 	gke/create/cluster/tpu \
 	gke/create/gpus \
 	gke/create/bucket \
