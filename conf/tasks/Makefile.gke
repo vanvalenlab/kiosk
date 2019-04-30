@@ -53,19 +53,21 @@ gke/destroy/project:
 	#gcloud container clusters upgrade ${CLUSTER_NAME} --quiet --master \
 	#	--zone=${GKE_COMPUTE_ZONE} \
 	#	|| echo "An upgrade of the cluster would be superfluous."
+## Create a new GKE cluster with TPUs enabled
 gke/create/cluster/tpu:
 	@echo "Creating tpu enabled GKE cluster..."
 	@echo "Using the following command: "
-	gcloud container clusters create $(CLUSTER_NAME) \
-		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
+	@gcloud components install beta --quiet
+	@gcloud config set project ${PROJECT}
+	@gcloud config set compute/zone ${GKE_COMPUTE_ZONE}
+	gcloud beta container clusters create $(CLUSTER_NAME) \
 		--zone=$(GKE_COMPUTE_ZONE) \
-		--node-locations=$(GKE_COMPUTE_ZONE) \
 		--max-nodes=$(NODE_MAX_SIZE) \
 		--min-nodes=$(NODE_MIN_SIZE) \
 		--machine-type=$(GKE_MACHINE_TYPE) \
 		--cluster-version $(KUBERNETES_VERSION) \
 		--enable-autoscaling \
-		--no-enable-autoupgrade \
+		--enable-autoupgrade \
 		--scopes=cloud-platform \
 		--enable-ip-alias \
 		--enable-tpu \
