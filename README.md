@@ -31,7 +31,7 @@ The scalability of the software is enabled by cloud computing. As such, the prep
 
 #### All Users (Windows and otherwise)
 
-1. Install [Docker for your OS](https://www.docker.com/community-edition) (*FREE Community Edition*). 
+1. Install [Docker for your OS](https://www.docker.com/community-edition) (*FREE Community Edition*).
 2. Start a terminal shell
 3. Install the Deepcell kiosk wrapper script: `docker run vanvalenlab/kiosk:0.3.0 | sudo -E bash -s 0.3.0`
 4. Start the kiosk. Just run: `kiosk`
@@ -54,12 +54,41 @@ When you're done using the cluster, you may want to shutdown the cluster, and pe
 
 - When using the `Predict` functionality, the first image will take a while to process (up to 10 minutes) because the cluster will need to requisition more computing resources. (This is because the cluster is designed to use as few resources as possible in its resting state.)
 - This repository is being actively developed. If you are experiencing issues with the Deepcell kiosk, please consult the [Troubleshooting document](docs/TROUBLESHOOTING.md) in the `docs` folder.
-- Those interested in Kiosk developement should follow a different path to start the Kiosk: 
+- Those interested in Kiosk developement should follow a different path to start the Kiosk:
     1. Clone this repo: `git clone git@github.com:vanvalenlab/kiosk.git`
     2. Initialize the "build-harness": `make init`
     3. Build the container: `make docker/build`
     4. Install wrapper script: `make install`
     5. Start the kiosk. `make run`
+
+
+## Accessing Cluster Logging and Metrics Functionality using OpenVPN
+1. After cluster startup, choose `Shell` from the main menu. On the command line, execute the following command:
+
+```bash
+POD_NAME=`kubectl get pods --namespace=kube-system -l type=openvpn | awk END'{ print $1 }'` \
+&& kubectl logs --namespace=kube-system $POD_NAME
+```
+
+If the OpenVPN pod has already deployed, you should see something like "Mon Apr 29 21:15:53 2019 Initialization Sequence Completed" somewhere in the output.
+
+2. If you see that line, then execute
+
+```bash
+POD_NAME=`kubectl get pods --namespace kube-system -l type=openvpn | awk END'{ print $1 }'` \
+&& SERVICE_NAME=`kubectl get svc --namespace kube-system -l type=openvpn | awk END'{ print $1 }'` \
+&& SERVICE_IP=$(kubectl get svc --namespace kube-system $SERVICE_NAME -o jsonpath='{.status.loadBalancer.ingress[0].ip}') \
+&& KEY_NAME=kubeVPN \
+&& kubectl --namespace kube-system exec -it $POD_NAME /etc/openvpn/setup/newClientCert.sh $KEY_NAME $SERVICE_IP \
+&& kubectl --namespace kube-system exec -it $POD_NAME cat /etc/openvpn/certs/pki/$KEY_NAME.ovpn > $KEY_NAME.ovpn
+```
+
+3. Then, copy the newly-generated `kubeVPN.ovpn` file onto your local machine. (You can do this either by viewing the file's contents and copy-pasting them manually, or by using a file-copying tool like SCP.)
+
+4. Next, using an OpenVPN client locally, connect to the cluster using `openvpn --config kubeVPN.ovpn` as your config file. You may need to use `sudo` if the above does not work.
+
+5. Once inside the cluster, you can connect to Kibana (logging) and Grafana (monitoring) by going to `[service_IP]:[service_port]` for the relevant service from any web browser on your local machine. (To view the service ports and IPs, execut the command `kubectl get svc --all-namespaces` from the kiosk's command line.)
+
 
 ## References
 - [Cluster Autoscaler for AWS](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws)
@@ -71,11 +100,11 @@ When you're done using the cluster, you may want to shutdown the cluster, and pe
 Copyright © 2018-2019 [The Van Valen Lab](http://www.vanvalen.caltech.edu/) at the California Institute of Technology (Caltech), with support from the Paul Allen Family Foundation, Google, & National Institutes of Health (NIH) under Grant U24CA224309-01.  
 All rights reserved.
 
-## License 
+## License
 
 This software is licensed under a modified [APACHE2](LICENSE).
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 See [LICENSE](LICENSE) for full details.
 

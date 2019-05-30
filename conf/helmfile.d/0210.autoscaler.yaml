@@ -26,13 +26,29 @@ releases:
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/autoscaler'
   version: "0.1.0"
   values:
-    - app_name: "autoscaler"
-      deployment_name: "autoscaler-deployment"
-      replicas: 1
-      image_name: "vanvalenlab/kiosk-autoscaler"
-      image_version: "notebook_auto_run"
-      container_name: "autoscaler-container"
-      service_account_name: "autoscaler-service-account"
+    - replicas: 1
+
+      image:
+        repository: "vanvalenlab/kiosk-autoscaler"
+        tag: "0.1"
+        pullPolicy: "Always"
+
+      serviceAccount:
+        # Specifies whether a ServiceAccount should be created
+        create: true
+        # The name of the ServiceAccount to use.
+        # If not set and create is true, a name is generated using the fullname template
+        name:
+
+      resources:
+        requests:
+          cpu: 650m
+          memory: 64Mi
+        # limits:
+        #   cpu: 100m
+        #   memory: 64Mi
+
+# 1|{{ env "GPU_NODE_MAX_SIZE" | default 10 }}|1|deepcell|deployment|predict|zip-consumer;
       env:
         DEBUG: "true"
         INTERVAL: "5"
@@ -40,17 +56,10 @@ releases:
         REDIS_PORT: "6379"
 {{ if eq (env "CLOUD_PROVIDER" | default "aws") "aws" }}
         AUTOSCALING: >
-            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "AWS_MAX_GPU_NODES" | default 5 }}|1|deepcell|deployment|predict|tf-serving-deployment;
-            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|redis-consumer-deployment;
-            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "AWS_MAX_GPU_NODES" | default 5 }}|1|deepcell|deployment|predict|zip-consumer-deployment;
-            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|data-processing-deployment;
-            0|4|1|deepcell|job|train|training-job
+            {{ env "AWS_MIN_GPU_NODES" | default 0 }}|{{ env "AWS_MAX_GPU_NODES" | default 5 }}|1|deepcell|deployment|predict|tf-serving;
+            0|4|1|deepcell|job|train|training
 {{ else }}
         AUTOSCALING: >
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|deployment|predict|tf-serving-deployment;
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|redis-consumer-deployment;
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|deployment|predict|zip-consumer-deployment;
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_MAX_TIMES_FIVE" | default 5 }}|1|deepcell|deployment|predict|data-processing-deployment;
-            0|4|1|deepcell|job|train|training-job;
-            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|job|notebook|model-benchmarking-job;
+            {{ env "GPU_NODE_MIN_SIZE" | default 0 }}|{{ env "GPU_NODE_MAX_SIZE" | default 5 }}|1|deepcell|deployment|predict|tf-serving;
+            0|4|1|deepcell|job|train|training
 {{ end }}

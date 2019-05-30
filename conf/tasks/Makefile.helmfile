@@ -1,7 +1,18 @@
+## helmfile sync has been failing a lot on GKE, due to automatic master upgrades immediately after cluster creation
+## @helmfile sync || echo "Services couldn't be synced."
+## what follow is a workaround
 helmfile/create/all:
 	@echo " "
 	@echo "Syncing all Kubernetes resources using helmfiles..."
-	@helmfile sync || echo "Services couldn't be synced."
+	/conf/patches/gke-helmfile-deployment.sh
 	@echo "Helmfile deployment finished."
+	@echo " "
+	@echo " "
+
+helmfile/destroy/all:
+	@echo " "
+	@echo "Destroying all Kubernetes resources using helmfiles..."
+	/conf/patches/gke-helmfile-destruction.sh
+	@echo "Helmfile destruction finished."
 	@echo " "
 	@echo " "

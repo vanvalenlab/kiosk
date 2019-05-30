@@ -1,17 +1,24 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Values.job_name }}
+  name: {{ template "fullname" . }}
   labels:
-    app: {{ .Values.app_name }}
+    app: {{ template "name" . }}
+    chart: {{ template "chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   parallelism: {{ .Values.parallelism }}
   completions: 2147483647
+  # selector:
+  #   matchLabels:
+  #     app: {{ template "name" . }}
+  #     release: {{ .Release.Name }}
   template:
     metadata:
-      name: {{ .Values.job_name }}
       labels:
-        app: {{ .Values.app_name }}
+        app: {{ template "name" . }}
+        release: {{ .Release.Name }}
     spec:
       restartPolicy: Never
       nodeSelector:
@@ -24,15 +31,19 @@ spec:
       - key: "nvidia.com/gpu"
         operator: "Exists"
         effect: "NoSchedule"
+      - key: "training_gpu"
+        operator: "Equal"
+        value: "yes"
+        effect: "NoSchedule"
       containers:
-      - name: {{ .Values.container_name }}
-        image: {{ .Values.image_name }}:{{ .Values.image_tag }}
-        imagePullPolicy: "Always"
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         resources:
           limits:
             nvidia.com/gpu: 1
         ports:
-        - containerPort: {{ .Values.job_port }}
+        - containerPort: {{ .Values.service.httpTargetPort }}
         env:
 {{- range $name, $value := .Values.env }}
 {{- if not ( empty $value) }}
@@ -40,13 +51,13 @@ spec:
           value: {{ $value | quote }}
 {{- end }}
 {{- end }}
-{{ $secrets_name := .Values.secrets_name }}
+{{ $dot := . }}
 {{- range $name, $value := .Values.secrets }}
 {{- if not ( empty $value) }}
         - name: {{ $name }}
           valueFrom:
             secretKeyRef:
-              name: {{ $secrets_name }}
+              name: {{ template "secretName" $dot }}
               key: {{ $name }}
 {{- end }}
 {{- end }}

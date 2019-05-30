@@ -1,25 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.deployment_name }}
+  name: {{ template "fullname" . }}
   labels:
-    app: {{ .Values.app_name }}
+    app: {{ template "name" . }}
+    chart: {{ template "chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
-  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      app: {{ .Values.app_name }}
+      app: {{ template "name" . }}
+      release: {{ .Release.Name }}
+  replicas: {{ .Values.replicas }}
   template:
     metadata:
       labels:
-        app: {{ .Values.app_name }}
+        app: {{ template "name" . }}
+        release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ .Values.container_name }}
-        image: {{ .Values.image_name }}:{{ .Values.image_tag }}
-        imagePullPolicy: "Always"
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
-        - containerPort: {{ .Values.deployment_port }}
+        - containerPort: {{ .Values.service.httpTargetPort }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
         env:
 {{- range $name, $value := .Values.env }}
 {{- if not ( empty $value) }}
@@ -27,13 +34,13 @@ spec:
           value: {{ $value | quote }}
 {{- end }}
 {{- end }}
-{{ $secrets_name := .Values.secrets_name }}
+{{ $dot := . }}
 {{- range $name, $value := .Values.secrets }}
 {{- if not ( empty $value) }}
         - name: {{ $name }}
           valueFrom:
             secretKeyRef:
-              name: {{ $secrets_name }}
+              name: {{ template "secretName" $dot }}
               key: {{ $name }}
 {{- end }}
 {{- end }}

@@ -8,7 +8,7 @@ helmDefaults:
 releases:
 
 ################################################################################
-## redis-consumer ##################################################
+## Redis-Consumer ##############################################################
 ################################################################################
 
 #
@@ -26,36 +26,35 @@ releases:
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/redis-consumer'
   version: "0.1.0"
   values:
-    - app_name: "redis-consumer-interface"
-      deployment_name: "redis-consumer-deployment"
-      replicas: 0
-      image_name: "vanvalenlab/kiosk-redis-consumer"
-      image_tag: "storage-retry"
-      deployment_port: 8080
-      container_name: "redis-consumer-container"
-      service_name: "redis-consumer-service"
-      service_port: 8080
-      service_type: "ClusterIP"
-      secrets_name: "redis-consumer-env-variables"
+    - replicas: 1
+
+      image:
+        repository: "vanvalenlab/kiosk-redis-consumer"
+        tag: "0.1"
+        pullPolicy: "Always"
+
       resources:
         requests:
-          cpu: 100m
-          memory: 2048Mi
+          cpu: 750m
+          memory: 512Mi
         # limits:
         #   cpu: 100m
         #   memory: 2Gi
+
       env:
         REDIS_HOST: "redis-master"
         REDIS_PORT: "6379"
-        TF_HOST: "tf-serving-service"
+        TF_HOST: "tf-serving"
         TF_PORT: "8500"
-        DP_HOST: "data-processing-service"
+        DP_HOST: "data-processing"
         DP_PORT: "8080"
         DEBUG: "True"
+        INTERVAL: "1"
         AWS_REGION: '{{ env "AWS_REGION" | default "us-east-1" }}'
         CLOUD_PROVIDER: '{{ env "CLOUD_PROVIDER" | default "aws" }}'
         GKE_COMPUTE_ZONE: '{{ env "GKE_COMPUTE_ZONE" | default "us-west1-b" }}'
         CONSUMER_TYPE: "image"
+
       secrets:
         AWS_ACCESS_KEY_ID: '{{ env "AWS_ACCESS_KEY_ID" | default "NA" }}'
         AWS_SECRET_ACCESS_KEY: '{{ env "AWS_SECRET_ACCESS_KEY" | default "NA" }}'

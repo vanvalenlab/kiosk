@@ -15,7 +15,7 @@ releases:
 # References:
 #   - [web address of Helm chart's YAML file]
 #
-- name: "train"
+- name: "training"
   namespace: "deepcell"
   labels:
     chart: "training"
@@ -26,22 +26,30 @@ releases:
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/training'
   version: "0.1.0"
   values:
-    - app_name: "training"
-      parallelism: 1
-      image_name: "vanvalenlab/kiosk-training"
-      image_tag: "0.1"
-      job_name: "training-job"
-      job_port: 7241
-      container_name: "training-container"
-      service_name: "training-service"
-      service_port: 7241
-      service_type: "ClusterIP"
+    - parallelism: 0
+
+      image:
+        repository: "vanvalenlab/kiosk-training"
+        tag: "0.1"
+        pullPolicy: "Always"
+
+      service:
+        type: "ClusterIP"
+
+        httpIngressEnabled: true
+        internalHttpPort: 7241
+        httpTargetPort: 7241
+        externalHttpPort: 7241
+
+        httpsIngressEnabled: false
+
       nodeSelector:
 {{ if eq (env "CLOUD_PROVIDER" | default "aws") "aws" }}
         beta.kubernetes.io/instance-type: '{{ env "AWS_GPU_MACHINE_TYPE" | default "p2.xlarge" }}'
 {{ else }}
-        cloud.google.com/gke-accelerator: '{{ env "GPU_TYPE" | default "nvidia-tesla-k80" }}'
+        cloud.google.com/gke-accelerator: '{{ env "TRAINING_GPU_TYPE" | default "nvidia-tesla-k80" }}'
 {{ end }}
+
       env:
         CLOUD_PROVIDER: '{{ env "CLOUD_PROVIDER" | default "aws" }}'
         DEBUG: "True"
@@ -51,6 +59,7 @@ releases:
         REDIS_PORT: "6379"
         STATUS: "new"
         GKE_COMPUTE_ZONE: '{{ env "GKE_COMPUTE_ZONE" | default "us-west1-b" }}'
+
       secrets:
         AWS_ACCESS_KEY_ID: '{{ env "AWS_ACCESS_KEY_ID" | default "NA" }}'
         AWS_SECRET_ACCESS_KEY: '{{ env "AWS_SECRET_ACCESS_KEY" | default "NA" }}'

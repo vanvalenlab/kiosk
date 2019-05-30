@@ -1,23 +1,33 @@
-app_name: "data-processing"
+# Default values for data-processing.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-# deployment.yaml
-deployment_name: "data-processing-deployment"
 replicas: 1
-image_name: "vanvalenlab/kiosk-data-processing"
-image_tag: "latest"
-deployment_port: 8080
-container_name: "data-processing-container"
-resources:
-  # requests:
-  #   cpu: 100m
-  #   memory: 512Mi
-  # limits:
-  #   cpu: 100m
-  #   memory: 512Mi
+
+image:
+  repository: "vanvalenlab/kiosk-data-processing"
+  tag: "latest"
+  pullPolicy: "Always"
+
+resources: {}
+
+service:
+  type: "ClusterIP"
+
+  httpIngressEnabled: true
+  internalHttpPort: 8080
+  httpTargetPort: 8080
+  externalHttpPort: 8080
+
+  httpsIngressEnabled: false
+  internalHttpsPort: 8443
+  httpsTargetPort: 8443
+  externalHttpsPort: 8443
+
+  prometheusEnabled: true
+  prometheusHttpPort: 8000
+
 env:
   LISTEN_PORT: 8080
-
-# service.yaml
-service_name: "data-processing-service"
-service_port: 8080
-service_type: "ClusterIP"
+  PROMETHEUS_PORT: 8000
+  PROMETHEUS_ENABLED: true

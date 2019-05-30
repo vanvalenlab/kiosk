@@ -1,20 +1,28 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ .Values.deployment_name }}
+  name: {{ template "fullname" . }}
   labels:
-    app: {{ .Values.app_name }}
+    app: {{ template "name" . }}
+    chart: {{ template "chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
+  selector:
+    matchLabels:
+      app: {{ template "name" . }}
+      release: {{ .Release.Name }}
   replicas: {{ .Values.replicas }}
   template:
     metadata:
       labels:
-        app: {{ .Values.app_name }}
+        app: {{ template "name" . }}
+        release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ .Values.container_name }}
-        image: {{ .Values.image_name }}:{{ .Values.image_version }}
-        imagePullPolicy: Always
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         resources:
           requests:
             cpu: 100m

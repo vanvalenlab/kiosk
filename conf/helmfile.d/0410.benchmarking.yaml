@@ -8,7 +8,7 @@ helmDefaults:
 releases:
 
 ################################################################################
-## AutoScaler ################################################################
+## Benchmarking ################################################################
 ################################################################################
 
 #
@@ -26,13 +26,11 @@ releases:
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/benchmarking'
   version: "0.1.0"
   values:
-    - app_name: "benchmarking"
-      deployment_name: "benchmarking-deployment"
-      replicas: 1
-      image_name: "vanvalenlab/kiosk-benchmarking"
-      image_version: "multiple_zip_files"
-      container_name: "benchmarking-container"
-      service_account_name: "benchmarking-service-account"
+    - replicas: 1
+      image:
+        repository: "vanvalenlab/kiosk-benchmarking"
+        tag: "0.1"
+        pullPolicy: "Always"
       env:
         REDIS_HOST: "redis-master"
         REDIS_PORT: "6379"
@@ -43,7 +41,7 @@ releases:
         BENCHMARK_MODEL_VERSION: '{{ env "BENCHMARK_MODEL_VERSION" | default "NA" }}'
         BENCHMARK_POSTPROCESSING: '{{ env "BENCHMARK_POSTPROCESSING" | default "NA" }}'
         BENCHMARK_CUTS: '{{ env "BENCHMARK_CUTS" | default "NA" }}'
-        GPU_TYPE: '{{ env "GPU_TYPE" | default "NA" }}'
+        GPU_TYPE: '{{ env "PREDICTION_GPU_TYPE" | default "NA" }}'
         CLUSTER_ADDRESS: '{{ env "CLUSTER_ADDRESS" | default "NA" }}'
         UPLOAD_METHOD: '{{ env "UPLOAD_METHOD" | default "direct" }}'
         IMAGES_PER_ZIP: '{{ env "IMAGES_PER_ZIP" | default "100" }}'

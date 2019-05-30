@@ -1,8 +1,15 @@
+{{- if .Values.rbac.create -}}
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
-  name: {{ .Values.app_name }}
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ template "chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 rules:
   - apiGroups: ["*"]
     resources: ["deployments", "jobs"]
-    verbs: ["get", "list", "update", "version"]
+    verbs: ["get", "list", "update", "patch", "version"]
+{{- end -}}

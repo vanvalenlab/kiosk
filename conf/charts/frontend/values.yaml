@@ -1,31 +1,38 @@
-app_name: "frontend"
+# Default values for frontend.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-#deployment.yaml
 replicas: 1
-image_name: "vanvalenlab/kiosk-frontend"
-image_version: "latest"
-#image_name: "k8s.gcr.io/echoserver"
-#image_version: "1.4"
-deployment_name: "frontend-deployment"
-deployment_port: 3001
-container_name: "frontend-container"
 
-# service.yaml
-service_name: "frontend-service"
-service_port: 3000
-service_type: "ClusterIP"
+image:
+  repository: "vanvalenlab/kiosk-frontend"
+  tag: "latest"
+  pullPolicy: "Always"
 
-# ingress.yaml
-ingress_name: "frontend-ingress"
-ingress_path: "/"
 ingress:
-  annotations:
+  enabled: true
+  path: /
+  annotations: {}
     #kubernetes.io/ingress.class: "nginx"
     #nginx.ingress.kubernetes.io/rewrite-target: /
     #nginx.ingress.kubernetes.io/ssl-redirect: "false"
     #nginx.ingress.kubernetes.io/proxy-body-size: "25m"
 
-# secrets.yaml and hemlfile.d/frontend.yaml
+service:
+  type: "ClusterIP"
+
+  httpIngressEnabled: true
+  internalHttpPort: 8080
+  httpTargetPort: 8080
+  externalHttpPort: 8080
+
+  httpsIngressEnabled: false
+  internalHttpsPort: 8443
+  httpsTargetPort: 8443
+  externalHttpsPort: 8443
+
+resources: {}
+
 env:
   PORT: "8080"
   REDIS_HOST: "redis-master"
@@ -33,6 +40,7 @@ env:
   MODEL_PREFIX: "models/"
   AWS_REGION: "us-east-1"
   CLOUD_PROVIDER: "aws"
+
 secrets:
   AWS_ACCESS_KEY_ID: "change_me"
   AWS_SECRET_ACCESS_KEY: "change_me"

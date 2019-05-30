@@ -16,12 +16,12 @@ releases:
 #   - [web address of Helm chart's YAML file]
 #
 - name: "elasticsearch"
-  namespace: "deepcell"
+  namespace: "elk"
   labels:
     chart: "elasticsearch"
     component: "elasticsearch"
-    namespace: "deepcell"
-    vendor: "vanvalenlab"
+    namespace: "elk"
+    vendor: "elastic.co"
     default: "true"
   chart: 'stable/elasticsearch'
   version: "1.19.1"
@@ -92,7 +92,7 @@ releases:
             # memory: "1024Mi"
           requests:
             cpu: "25m"
-            memory: "512Mi"
+            memory: "768Mi"
         priorityClassName: ""
         ## (dict) If specified, apply these annotations to each client Pod
         # podAnnotations:
@@ -129,7 +129,7 @@ releases:
           httpGet:
             path: /_cluster/health?local=true
             port: 9200
-          initialDelaySeconds: 5
+          initialDelaySeconds: 30
         antiAffinity: "soft"
         nodeAffinity: {}
         nodeSelector: {}
@@ -147,7 +147,7 @@ releases:
             # memory: "1024Mi"
           requests:
             cpu: "25m"
-            memory: "512Mi"
+            memory: "768Mi"
         priorityClassName: ""
         ## (dict) If specified, apply these annotations to each master Pod
         # podAnnotations:
@@ -174,12 +174,16 @@ releases:
           httpGet:
             path: /_cluster/health?local=true
             port: 9200
-          initialDelaySeconds: 5
+          initialDelaySeconds: 30
         terminationGracePeriodSeconds: 3600
         antiAffinity: "soft"
         nodeAffinity: {}
-        nodeSelector: {}
-        tolerations: []
+        nodeSelector:
+          elasticsearch_data: "yes"
+        tolerations:
+        - key: elasticsearch_data
+          operator: Exists
+          effect: NoSchedule
         initResources: {}
           # limits:
           #   cpu: "25m"
@@ -189,11 +193,12 @@ releases:
           #   memory: "128Mi"
         resources:
           limits:
-            cpu: "1"
+            ### Resource limits removed because elasticsearch-data-* pods are being scheduled to their own nodes now
+            # cpu: "1"
             # memory: "2048Mi"
           requests:
-            cpu: "25m"
-            memory: "1536Mi"
+            cpu: "300m"
+            # memory: "10Gi"
         priorityClassName: ""
         ## (dict) If specified, apply these annotations to each data Pod
         # podAnnotations:

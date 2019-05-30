@@ -1,0 +1,27 @@
+helmDefaults:
+  args:
+    - "--wait"
+    - "--timeout=600"
+    - "--force"
+    - "--reset-values"
+
+releases:
+
+################################################################################
+## OpenVPN #####################################################################
+################################################################################
+
+#
+# References:
+#   - https://github.com/helm/charts/stable/openvpn
+#
+- name: "openvpn"
+  namespace: "kube-system"
+  labels:
+    chart: "openvpn"
+    component: "openvpn"
+    namespace: "kube-system"
+    vendor: "openvpn"
+    default: "true"
+  chart: 'stable/openvpn'
+  version: "1.1.0"

@@ -1,0 +1,41 @@
+helmDefaults:
+  args:
+    - "--wait"
+    - "--timeout=600"
+    - "--force"
+    - "--reset-values"
+
+################################################################################
+## Redis Monitoring ############################################################
+################################################################################
+
+repositories:
+ # Stable repo of official helm charts
+  - name: "stable"
+    url: "https://kubernetes-charts.storage.googleapis.com"
+
+releases:
+  - name: "prometheus-redis-exporter"
+    labels:
+      chart: "prometheus-redis-exporter"
+    chart: "stable/prometheus-redis-exporter"
+    version: "1.0.2"
+    namespace: "monitoring"
+    values:
+      - resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+
+        service:
+          annotations:
+            prometheus.io/path: /metrics
+            prometheus.io/port: "9121"
+            prometheus.io/scrape: "true"
+
+        annotations:
+          prometheus.io/path: /metrics
+          prometheus.io/port: "9121"
+          prometheus.io/scrape: "true"
+
+        redisAddress: redis://redis-master.deepcell:6379

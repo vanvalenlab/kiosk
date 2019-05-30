@@ -1,21 +1,28 @@
-app_name: "redis-consumer"
+# Default values for redis-consumer.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-# deployment.yaml
-deployment_name: "redis-consumer-deployment"
 replicas: 1
-image_name: "vanvalenlab/kiosk-redis-consumer"
-image_tag: "latest"
-deployment_port: 8080
-container_name: "redis-consumer-container"
-resources:
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+
+image:
+  repository: "vanvalenlab/kiosk-redis-consumer"
+  tag: "latest"
+  pullPolicy: "Always"
+
+resources: {}
+
+service:
+  type: "ClusterIP"
+
+  httpIngressEnabled: true
+  internalHttpPort: 8080
+  httpTargetPort: 8080
+  externalHttpPort: 8080
+
+  httpsIngressEnabled: false
+
 env:
-  REDIS_HOST: "redis-master-0"
+  REDIS_HOST: "redis-master"
   REDIS_PORT: "6379"
   TF_HOST: "overwrite_this"
   TF_PORT: "sepcify_me"
@@ -26,13 +33,6 @@ env:
   CLOUD_PROVIDER: "aws"
   GKE_COMPUTE_ZONE: "us-west1-b"
 
-# service.yaml
-service_name: "redis-consumer-service"
-service_port: 8080
-service_type: "ClusterIP"
-
-# secrets.yaml
-secrets_name: "redis-consumer-env-variables"
 secrets:
   AWS_ACCESS_KEY_ID: "change_me"
   AWS_SECRET_ACCESS_KEY: "change_me"

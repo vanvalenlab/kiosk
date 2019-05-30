@@ -8,7 +8,7 @@ helmDefaults:
 releases:
 
 ################################################################################
-## AutoScaler ################################################################
+## Redis-Janitor ###############################################################
 ################################################################################
 
 #
@@ -26,13 +26,28 @@ releases:
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/redis-janitor'
   version: "0.1.0"
   values:
-    - app_name: "redis-janitor"
-      deployment_name: "redis-janitor-deployment"
-      replicas: 1
-      image_name: "vanvalenlab/kiosk-redis-janitor"
-      image_version: "dev"
-      container_name: "redis-janitor-container"
-      service_account_name: "redis-janitor-service-account"
+    - replicas: 1
+
+      image:
+        repository: "vanvalenlab/kiosk-redis-janitor"
+        tag: "0.1"
+        pullPolicy: "Always"
+
+      serviceAccount:
+        # Specifies whether a ServiceAccount should be created
+        create: true
+        # The name of the ServiceAccount to use.
+        # If not set and create is true, a name is generated using the fullname template
+        name:
+
+      resources:
+        requests:
+          cpu: 300m
+          memory: 128Mi
+        # limits:
+        #   cpu: 100m
+        #   memory: 64Mi
+
       env:
         DEBUG: "true"
         INTERVAL: "5"

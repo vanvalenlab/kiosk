@@ -26,28 +26,42 @@ releases:
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/tensorboard'
   version: "0.1.0"
   values:
-    - app_name: "tensorboard"
-      replicas: 1
-      image_name: "vanvalenlab/kiosk-tensorboard"
-      image_tag: "0.1"
-      deployment_name: "tensorboard-deployment"
-      deployment_port: 6006
-      container_name: "tensorboard-container"
-      service_name: "tensorboard-service"
-      service_port: 6006
-      service_type: "ClusterIP"
-      ingress_name: "tensorboard-ingress"
-      ingress_path: "/tensorboard" 
+    - replicas: 1
+
+      image:
+        repository: "vanvalenlab/kiosk-tensorboard"
+        tag: "0.1"
+        pullPolicy: "Always"
+
+      service:
+        type: "ClusterIP"
+
+        httpIngressEnabled: true
+        internalHttpPort: 6006
+        httpTargetPort: 6006
+        externalHttpPort: 6006
+
+        httpsIngressEnabled: false
+
       ingress:
+        enabled: true
+        path: /tensorboard
         annotations:
           nginx.ingress.kubernetes.io/rewrite-target: /
           nginx.ingress.kubernetes.io/ssl-redirect: "false"
           nginx.ingress.kubernetes.io/proxy-body-size: "1g"
           kubernetes.io/ingress.class: "nginx"
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
       env:
         LOG_PREFIX: "tensorboard_logs"
         CLOUD_PROVIDER: '{{ env "CLOUD_PROVIDER" | default "aws" }}'
         GKE_COMPUTE_ZONE: '{{ env "GKE_COMPUTE_ZONE" | default "us-west1-b" }}'
+
       secrets:
         AWS_ACCESS_KEY_ID: '{{ env "AWS_ACCESS_KEY_ID" | default "NA" }}'
         AWS_SECRET_ACCESS_KEY: '{{ env "AWS_SECRET_ACCESS_KEY" | default "NA" }}'

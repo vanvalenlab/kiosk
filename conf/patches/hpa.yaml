@@ -1,0 +1,94 @@
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tf-serving
+  namespace: deepcell
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tf-serving
+  minReplicas: 1
+  maxReplicas: $GPU_NODE_MAX_SIZE
+  metrics:
+  - type: Pods
+    pods:
+      metricName: accelerator_duty_cycle
+      targetAverageValue: 80
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: data-processing
+  namespace: deepcell
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: data-processing
+  minReplicas: 1
+  maxReplicas: $GPU_MAX_TIMES_TEN
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageUtilization: 80
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend
+  namespace: deepcell
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 1
+  maxReplicas: $GPU_MAX_TIMES_TEN
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: redis-consumer
+  namespace: deepcell
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: redis-consumer
+  minReplicas: 1
+  maxReplicas: $GPU_MAX_TIMES_FIFTY
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: zip-consumer
+  namespace: deepcell
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: zip-consumer
+  minReplicas: 1
+  maxReplicas: $GPU_MAX_TIMES_FIFTY
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80

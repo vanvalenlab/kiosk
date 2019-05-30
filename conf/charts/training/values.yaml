@@ -1,17 +1,25 @@
-app_name: "training"
+# Default values for training.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-# job.yaml
 parallelism: 0
-image_name: "vanvalenlab/kiosk-training"
-image_tag: "latest"
-job_name: "training-job"
-job_port: 7241
-container_name: "training-container"
 
-# service.yaml
-service_name: "training-service"
-service_port: 7241
-service_type: "ClusterIP"
+image:
+  repository: "vanvalenlab/kiosk-training"
+  tag: "latest"
+  pullPolicy: "Always"
+
+resources: {}
+
+service:
+  type: "ClusterIP"
+
+  httpIngressEnabled: true
+  internalHttpPort: 7241
+  httpTargetPort: 7241
+  externalHttpPort: 7241
+
+  httpsIngressEnabled: false
 
 nodeSelector:
   #  cloud.google.com/gke-accelerator: "nvidia-tesla-k80"
@@ -28,7 +36,6 @@ env:
   STATUS: "new"
   GKE_COMPUTE_ZONE: "us-west1-b"
 
-secrets_name: "training-env-variables"
 secrets:
   AWS_ACCESS_KEY_ID: "change_me"
   AWS_SECRET_ACCESS_KEY: "change_me"

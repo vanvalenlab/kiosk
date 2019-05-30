@@ -1,18 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.deployment_name }}
+  name: {{ template "fullname" . }}
   labels:
-    app: {{ .Values.app_name }}
+    app: {{ template "name" . }}
+    chart: {{ template "chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
-  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      app: {{ .Values.app_name }}
+      app: {{ template "name" . }}
+      release: {{ .Release.Name }}
+  replicas: {{ .Values.replicas }}
   template:
     metadata:
+      annotations:
+{{ toYaml .Values.annotations | indent 8 }}
       labels:
-        app: {{ .Values.app_name }}
+        app: {{ template "name" . }}
+        release: {{ .Release.Name }}
     spec:
       restartPolicy: "Always"
       nodeSelector:
@@ -25,15 +32,22 @@ spec:
       - key: "nvidia.com/gpu"
         operator: "Exists"
         effect: "NoSchedule"
+      - key: "prediction_gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
       containers:
-      - name: {{ .Values.container_name }}
-        image: {{ .Values.image_name }}:{{ .Values.image_version }}
-        imagePullPolicy: "Always"
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         resources:
-          limits:
-            nvidia.com/gpu: 1
+{{ toYaml .Values.resources | indent 10 }}
         ports:
-        - containerPort: {{ .Values.deployment_port }}
+          - name: http
+            containerPort: {{ .Values.service.internalHttpPort }}
+            protocol: TCP
+          - name: grpc
+            containerPort: {{ .Values.service.internalGrpcPort }}
+            protocol: TCP
         env:
 {{- range $name, $value := .Values.env }}
 {{- if not ( empty $value) }}
@@ -41,12 +55,13 @@ spec:
           value: {{ $value | quote }}
 {{- end }}
 {{- end }}
+{{ $dot := . }}
 {{- range $name, $value := .Values.secrets }}
 {{- if not ( empty $value) }}
         - name: {{ $name }}
           valueFrom:
             secretKeyRef:
-              name: tf-serving-env-variables
+              name: {{ template "secretName" $dot }}
               key: {{ $name }}
 {{- end }}
 {{- end }}

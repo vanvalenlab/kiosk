@@ -1,11 +1,16 @@
-app_name: "kiosk-benchmarking"
+# Default values for benchmarking.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-# deployment.yaml
-deployment_name: "benchmarking-deployment"
 replicas: 1
-image_name: "vanvalenlab/kiosk-benchmarking"
-image_version: "latest"
-container_name: "benchmarking-container"
+
+image:
+  repository: "vanvalenlab/kiosk-benchmarking"
+  tag: "latest"
+  pullPolicy: "Always"
+
+resources: {}
+
 env:
   BENCHMARKING_PU_TYPE_AND_NUMBER: "specify_me"
   BENCHMARKING_PU_TYPE: "specify_me"

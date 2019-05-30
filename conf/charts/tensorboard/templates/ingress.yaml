@@ -1,7 +1,15 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "fullname" . -}}
+{{- $ingressPath := .Values.ingress.path -}}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ .Values.ingress_name }}
+  name: {{ $fullName }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ template "chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
   annotations:
 {{- range $name, $value := .Values.ingress.annotations }}
 {{- if not ( empty $value) }}
@@ -10,9 +18,10 @@ metadata:
 {{- end }}
 spec:
   rules:
-  - http:
-      paths:
-      - path: {{ .Values.ingress_path }}
-        backend:
-          serviceName: {{ .Values.service_name }}
-          servicePort: {{ .Values.service_port }}
+    - http:
+        paths:
+          - path: {{ $ingressPath }}
+            backend:
+              serviceName: {{ $fullName }}
+              servicePort: http
+{{- end }}

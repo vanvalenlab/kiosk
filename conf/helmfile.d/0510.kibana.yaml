@@ -16,12 +16,12 @@ releases:
 #   - [web address of Helm chart's YAML file]
 #
 - name: "kibana"
-  namespace: "deepcell"
+  namespace: "elk"
   labels:
     chart: "kibana"
     component: "kibana"
-    namespace: "deepcell"
-    vendor: "vanvalenlab"
+    namespace: "elk"
+    vendor: "elastic.co"
     default: "true"
   chart: 'stable/kibana'
   version: "1.5.0"
@@ -72,7 +72,9 @@ releases:
       extraContainers: |
       extraVolumeMounts: []
       extraVolumes: []
-      resources: {}
+      resources:
+        requests:
+          memory: 128Mi
       priorityClassName: ""
       tolerations: []
       nodeSelector: {}

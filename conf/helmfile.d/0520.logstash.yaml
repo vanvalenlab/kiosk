@@ -1,0 +1,251 @@
+helmDefaults:
+  args:
+    - "--wait"
+    - "--timeout=600"
+    - "--force"
+    - "--reset-values"
+
+releases:
+
+################################################################################
+## Logstash ####################################################################
+################################################################################
+
+#
+# References:
+#   - [web address of Helm chart's YAML file]
+#
+- name: "logstash"
+  namespace: "elk"
+  labels:
+    chart: "logstash"
+    component: "logstash"
+    namespace: "elk"
+    vendor: "elastic.co"
+    default: "true"
+  chart: 'stable/logstash'
+  version: "1.5.2"
+  values:
+    - appVersion: "6.6.0"
+
+      image:
+        repository: docker.elastic.co/logstash/logstash-oss
+        tag: 6.6.1
+        pullPolicy: IfNotPresent
+        ## Add secrets manually via kubectl on kubernetes cluster and reference here
+        #  pullSecrets:
+        #    - name: "myKubernetesSecret"
+
+      service:
+        type: ClusterIP
+        # clusterIP: None
+        # nodePort:
+        # Set this to local, to preserve client source ip.  Default stripes out the source ip
+        # externalTrafficPolicy: Local
+        annotations: {}
+          ## AWS example for use with LoadBalancer service type.
+          # external-dns.alpha.kubernetes.io/hostname: logstash.cluster.local
+          # service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+          # service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+        ports:
+          # syslog-udp:
+          #   port: 1514
+          #   targetPort: syslog-udp
+          #   protocol: UDP
+          # syslog-tcp:
+          #   port: 1514
+          #   targetPort: syslog-tcp
+          #   protocol: TCP
+          beats:
+            port: 5044
+            targetPort: beats
+            protocol: TCP
+          # http:
+          #  port: 8080
+          #  targetPort: http
+          #  protocol: TCP
+          # loadBalancerIP: 10.0.0.1
+
+      ports:
+        # - name: syslog-udp
+        #   containerPort: 1514
+        #   protocol: UDP
+        # - name: syslog-tcp
+        #   containerPort: 1514
+        #   protocol: TCP
+        - name: beats
+          containerPort: 5044
+          protocol: TCP
+        # - name: http
+        #   containerPort: 8080
+        #   protocol: TCP
+
+      ingress:
+        enabled: false
+        annotations: {}
+          # kubernetes.io/ingress.class: nginx
+          # kubernetes.io/tls-acme: "true"
+        path: /
+        hosts:
+          - logstash.cluster.local
+        tls: []
+        #  - secretName: logstash-tls
+        #    hosts:
+        #      - logstash.cluster.local
+
+      resources:
+        # We usually recommend not to specify default resources and to leave this as a conscious
+        # choice for the user. This also increases chances charts run on environments with little
+        # resources, such as Minikube. If you do want to specify resources, uncomment the following
+        # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+        # limits:
+        #  cpu: 100m
+        #  memory: 128Mi
+        requests:
+         cpu: 150m
+         memory: 1536Mi
+
+      nodeSelector:
+        logstash: "yes"
+
+      tolerations:
+      - key: logstash
+        operator: Exists
+        effect: NoSchedule
+
+      replicaCount: 4
+
+      livenessProbe:
+        httpGet:
+          path: /
+          port: monitor
+        initialDelaySeconds: 30
+        # periodSeconds: 30
+        # timeoutSeconds: 30
+        # failureThreshold: 6
+        # successThreshold: 1
+
+      readinessProbe:
+        httpGet:
+          path: /
+          port: monitor
+        initialDelaySeconds: 30
+        # periodSeconds: 30
+        # timeoutSeconds: 30
+        # failureThreshold: 6
+        # successThreshold: 1
+
+      persistence:
+        enabled: true
+        ## logstash data Persistent Volume Storage Class
+        ## If defined, storageClassName: <storageClass>
+        ## If set to "-", storageClassName: "", which disables dynamic provisioning
+        ## If undefined (the default) or set to null, no storageClassName spec is
+        ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+        ##   GKE, AWS & OpenStack)
+        ##
+        # storageClass: "-"
+        accessMode: ReadWriteOnce
+        size: 2Gi
+
+      volumeMounts:
+        - name: data
+          mountPath: /usr/share/logstash/data
+        - name: patterns
+          mountPath: /usr/share/logstash/patterns
+        - name: pipeline
+          mountPath: /usr/share/logstash/pipeline
+
+      exporter:
+        logstash:
+          enabled: false
+          image:
+            repository: bonniernews/logstash_exporter
+            tag: v0.1.2
+            pullPolicy: IfNotPresent
+          env: {}
+          resources: {}
+          path: /metrics
+          port: 9198
+          target:
+            port: 9600
+            path: /metrics
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: ls-exporter
+            periodSeconds: 15
+            timeoutSeconds: 60
+            failureThreshold: 8
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: ls-exporter
+            periodSeconds: 15
+            timeoutSeconds: 60
+            failureThreshold: 8
+            successThreshold: 1
+
+      elasticsearch:
+        host: elasticsearch-client
+        port: 9200
+
+      ## Patterns for filters.
+      ## Each YAML heredoc will become a separate pattern file.
+      patterns:
+        # main: |-
+        #   TESTING {"foo":.*}$
+
+      ## NOTE: To achieve multiple pipelines with this chart, current best practice
+      ## is to maintain one pipeline per chart release. In this way configuration is
+      ## simplified and pipelines are more isolated from one another.
+
+      inputs:
+        main: |-
+          input {
+            beats {
+              port => 5044
+            }
+          }
+
+      ## Examples for grok matches, in order:
+      ## All filters were tested against the examples using http://grokdebug.herokuapp.com/
+      ## Filter 1: Redis-consumer Storage Class Messages
+      ## [2019-03-28 22:43:15,521]:[DEBUG]:[GoogleStorage]: Downloaded /tmp/tmp0dzilK/directupload_watershednuclearnofgbg41f16_0_watershed_0_benchmarking100000special_image_0.png from bucket deepcell-output-benchmarking3 in 0.195045948029 seconds.
+      ## [2019-03-28 22:47:23,088]:[DEBUG]:[GoogleStorage]: Uploaded /tmp/tmpDZH9Sk/8e527bc296ea68aed57795ae33c76ae9.zip to bucket deepcell-output-benchmarking3 in 0.411799907684 seconds.
+      ## Filter 2: Redis-consumer gRPC Messages
+      ## [2019-03-28 22:43:16,210]:[DEBUG]:[PredictClient]: gRPC TensorFlowServingRequest finished in 0.455268859863 seconds.
+      ## [2019-03-28 22:43:18,231]:[DEBUG]:[PredictClient]: gRPC TensorFlowServingProtobufConversion took 2.01989483833 seconds.
+      ## [2019-03-28 22:47:22,407]:[INFO]:[ProcessClient]: gRPC DataProcessingStreamRequest of 5529600 bytes finished in 0.960053920746 seconds.
+      ## NOT BEING MATCHED: [2019-03-28 22:47:22,408]:[INFO]:[ProcessClient]: gRPC DataProcessingStreamConversion from 5529600 bytes to a numpy array of shape (1, 1280, 1080, 1) in 7.41481781006e-05 seconds.
+      ## Filter 3: Redis-consumer Consumer Messages
+      ## [2019-03-28 22:43:18,241]:[DEBUG]:[ImageFileConsumer]: Segmented key predict_e3700d5ae0f1478d81f21a72d685469e_directupload_watershednuclearnofgbg41f16_0_watershed_0_benchmarking100000special_image_059037.png (model watershednuclearnofgbg41f16:0, preprocessing: None, postprocessing: watershed) (0 retries) in 2.67694497108 seconds.
+      ## [2019-03-28 22:47:22,409]:[DEBUG]:[ImageFileConsumer]: Post-processed key predict_10e4553738b6428bae025ec4c1da9160_directupload_watershednuclearnofgbg41f16_0_watershed_0_benchmarking100000special_image_042604.png (model watershednuclearnofgbg41f16:0, preprocessing: None, postprocessing: watershed) (0 retries)  in 0.964694023132 seconds.
+      ## [2019-03-28 22:47:23,109]:[DEBUG]:[ImageFileConsumer]: Consumed key predict_10e4553738b6428bae025ec4c1da9160_directupload_watershednuclearnofgbg41f16_0_watershed_0_benchmarking100000special_image_042604.png (model watershednuclearnofgbg41f16:0, preprocessing: None, postprocessing: watershed) (0 retries) in 6.4265601635 seconds.
+      filters:
+        main: |-
+          filter {
+            if "redis-consumer" in [kubernetes][pod][name] {
+              grok {
+                match => {
+                  "message" => [
+                    "\[%{NOTSPACE:date} %{NOTSPACE:time}\]:\[%{LOGLEVEL:loglevel}\]:\[%{NOTSPACE:module}\]: %{NOTSPACE:redis_consumer_action} %{NOTSPACE:redis_consumer_filename} (from|to) bucket %{NOTSPACE:redis_consumer_bucket} in %{NUMBER:redis_consumer_seconds:float} seconds.",
+                    "\[%{NOTSPACE:date} %{NOTSPACE:time}\]:\[%{LOGLEVEL:loglevel}\]:\[%{NOTSPACE:module}\]: gRPC %{NOTSPACE:redis_consumer_action} (of %{NUMBER:redis_consumer_bytes:int} bytes )?(finished in|took) %{NUMBER:redis_consumer_seconds:float} seconds.",
+                    "\[%{NOTSPACE:date} %{NOTSPACE:time}\]:\[%{LOGLEVEL:loglevel}\]:\[%{NOTSPACE:module}\]: %{NOTSPACE:redis_consumer_action} key %{NOTSPACE:redis_consumer_key} \(model %{NOTSPACE:redis_consumer_model}, preprocessing: %{NOTSPACE:redis_consumer_preprocessing_function}, postprocessing: %{NOTSPACE:redis_consumer_postprocessing_function}\) \(%{NUMBER:redis_consumer_retries:int} retries\) ( )?in %{NUMBER:redis_consumer_seconds:float} seconds."
+                  ]
+                }
+              }
+            }
+          }
+
+      outputs:
+        main: |-
+          output {
+            # stdout { codec => rubydebug }
+            elasticsearch {
+              hosts => ["${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"]
+              manage_template => false
+              index => "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+            }
+          }

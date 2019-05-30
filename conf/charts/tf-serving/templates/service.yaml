@@ -1,14 +1,36 @@
-kind: Service
 apiVersion: v1
+kind: Service
 metadata:
-  name: {{ .Values.service_name }}
+  name: {{ template "fullname" . }}
   labels:
-    app: {{ .Values.app_name }}
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "chart" . }}
+    app: {{ template "name" . }}
+{{- if .Values.service.annotations }}
+  annotations:
+{{ toYaml .Values.service.annotations | indent 4 }}
+{{- end }}
 spec:
-  selector:
-    app: {{ .Values.app_name }}
+  type: {{ .Values.service.type }}
   ports:
-  - protocol: TCP
-    port: {{ .Values.service_port }}
-    targetPort: {{ .Values.deployment_port }}
-  type: {{ .Values.service_type }}
+  {{- if .Values.service.grpcIngressEnabled }}
+  - name: grpc
+    targetPort: {{ .Values.service.grpcTargetPort }}
+    port: {{ .Values.service.externalGrpcPort }}
+    protocol: TCP
+  {{- end }}
+  {{- if .Values.service.httpIngressEnabled }}
+  - name: http
+    targetPort: {{ .Values.service.httpTargetPort }}
+    port: {{ .Values.service.externalHttpPort }}
+    protocol: TCP
+  {{- end }}
+  {{- if .Values.service.httpsIngressEnabled }}
+  - name: https
+    targetPort: {{ .Values.service.httpsTargetPort }}
+    port: {{ .Values.service.externalHttpsPort }}
+    protocol: TCP
+  {{- end }}
+  selector:
+    app: {{ template "fullname" . }}

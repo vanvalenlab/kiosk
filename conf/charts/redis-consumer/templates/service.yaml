@@ -1,14 +1,27 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Values.service_name }}
+  name: {{ template "fullname" . }}
   labels:
-    app: {{ .Values.app_name }}
+    app: {{ template "fullname" . }}
+{{- if .Values.service.annotations }}
+  annotations:
+{{ toYaml .Values.service.annotations | indent 4 }}
+{{- end }}
 spec:
-  selector:
-    app: {{ .Values.app_name }}
+  type: {{ .Values.service.type }}
   ports:
-  - protocol: TCP
-    port: {{ .Values.service_port }}
-    targetPort: {{ .Values.deployment_port }}
-  type: {{ .Values.service_type }}
+  {{- if .Values.service.httpIngressEnabled }}
+  - name: http
+    targetPort: {{ .Values.service.httpTargetPort }}
+    port: {{ .Values.service.externalHttpPort }}
+    protocol: TCP
+  {{- end }}
+  {{- if .Values.service.httpsIngressEnabled }}
+  - name: https
+    targetPort: {{ .Values.service.httpsTargetPort }}
+    port: {{ .Values.service.externalHttpsPort }}
+    protocol: TCP
+  {{- end }}
+  selector:
+    app: {{ template "fullname" . }}

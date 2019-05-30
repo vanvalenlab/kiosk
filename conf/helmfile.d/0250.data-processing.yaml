@@ -26,19 +26,48 @@ releases:
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/data-processing'
   version: "0.1.0"
   values:
-    - app_name: "data-processing"
-      replicas: 1
-      image_name: "vanvalenlab/kiosk-data-processing"
-      image_tag: "0.1"
-      deployment_name: "data-processing-deployment"
-      deployment_port: 8080
-      container_name: "data-processing-container"
-      service_name: "data-processing-service"
-      service_port: 8080
-      service_type: "ClusterIP"
+    - replicas: 1
+
+      image:
+        repository: "vanvalenlab/kiosk-data-processing"
+        tag: "0.1"
+        pullPolicy: "Always"
+
+      service:
+        type: "ClusterIP"
+
+        httpIngressEnabled: true
+        internalHttpPort: 8080
+        httpTargetPort: 8080
+        externalHttpPort: 8080
+
+        httpsIngressEnabled: false
+        internalHttpsPort: 8443
+        httpsTargetPort: 8443
+        externalHttpsPort: 8443
+
+        prometheusEnabled: true
+        prometheusHttpPort: 8000
+
+        annotations:
+          prometheus.io/path: /metrics
+          prometheus.io/port: "8000"
+          prometheus.io/scrape: "true"
+
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8000"
+        prometheus.io/scrape: "true"
+
       resources:
         requests:
-          cpu: 100m
-          memory: 2048Mi
+          cpu: 1500m
+          memory: 1536Mi
+        # limits:
+        #   cpu: 100m
+        #   memory: 2048Mi
+
       env:
         LISTEN_PORT: 8080
+        PROMETHEUS_PORT: 8000
+        PROMETHEUS_ENABLED: true

@@ -1,33 +1,51 @@
-app_name: "tf-serving"
+# Default values for tf-serving.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-# deployment.yaml
 replicas: 0
-image_name: "vanvalenlab/kiosk-tf-serving"
-image_version: "latest"
-deployment_name: "tf-serving-deployment"
-deployment_port: 8501
-container_name: "tf-serving-container"
 
-# service.yaml
-service_name: "tf-serving-service"
-service_port: 1337
-service_type: "ClusterIP"
+image:
+  repository: "vanvalenlab/kiosk-tf-serving"
+  tag: "latest"
+  pullPolicy: "Always"
 
-nodeSelector:
+service:
+  type: "ClusterIP"
+
+  httpIngressEnabled: true
+  internalHttpPort: 8501
+  httpTargetPort: 8501
+  externalHttpPort: 8501
+
+  grpcIngressEnabled: true
+  internalGrpcPort: 8500
+  grpcTargetPort: 8500
+  externalGrpcPort: 8500
+
+  httpsIngressEnabled: false
+
+nodeSelector: {}
   #  cloud.google.com/gke-accelerator: "nvidia-tesla-k80"
   #  beta.kubernetes.io/instance-type: "p2.xlarge"
   #  cloud.google.com/gke-preemptible: "true"
 
-# secrets.yaml and hemlfile.d/frontend.yaml
+resources: {}
+  # requests:
+  #   nvidia.com/gpu: 1
+  # limits:
+  #   nvidia.com/gpu: 1
+
 env:
-  RPC_PORT: "8500"
-  REST_PORT: "8501"
-  REST_TIMEOUT: "180000"
+  PORT: "8500"
+  REST_API_PORT: "8501"
+  REST_API_TIMEOUT: "30000"
+  MODEL_CONFIG_FILE: "/kiosk/tf-serving/models.conf"
+  ENABLE_BATCHING: "false"
+  GRPC_CHANNEL_ARGS: ""
   MODEL_PREFIX: "models"
   CLOUD_PROVIDER: "aws"
-  TF_SERVING_CONFIG_FILE: "/kiosk/tf-serving/models.conf"
-  LOG_LEVEL: "3"
-  DEBUG: "FALSE"
+  TF_CPP_MIN_LOG_LEVEL: "3"
+
 secrets:
   AWS_ACCESS_KEY_ID: "change_me"
   AWS_SECRET_ACCESS_KEY: "change_me"

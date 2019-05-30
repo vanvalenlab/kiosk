@@ -192,6 +192,14 @@ function configure_aws() {
   export GPU_MAX_TIMES_FOUR=$(($AWS_MAX_GPU_NODES*4))
   export GPU_MAX_TIMES_FIVE=$(($AWS_MAX_GPU_NODES*5))
   export GPU_MAX_TIMES_TEN=$(($AWS_MAX_GPU_NODES*10))
+  export GPU_MAX_TIMES_TWENTY=$(($AWS_MAX_GPU_NODES*20))
+  export GPU_MAX_TIMES_THIRTY=$(($AWS_MAX_GPU_NODES*30))
+  export GPU_MAX_TIMES_FOURTY=$(($AWS_MAX_GPU_NODES*40))
+  export GPU_MAX_TIMES_FIFTY=$(($AWS_MAX_GPU_NODES*50))
+  export GPU_MAX_DIVIDED_BY_TWO=$(($AWS_MAX_GPU_NODES/2))
+  export GPU_MAX_DIVIDED_BY_THREE=$(($AWS_MAX_GPU_NODES/3))
+  export GPU_MAX_DIVIDED_BY_FOUR=$(($AWS_MAX_GPU_NODES/4))
+  export GPU_NODE_MAX_SIZE=${AWS_MAX_GPU_NODES}
 
   export KOPS_CLUSTER_NAME=${NAMESPACE}.k8s.local
   export KOPS_DNS_ZONE=${NAMESPACE}.k8s.local
@@ -207,7 +215,15 @@ function configure_aws() {
 	  -e GPU_MAX_TIMES_THREE \
 	  -e GPU_MAX_TIMES_FOUR \
 	  -e GPU_MAX_TIMES_FIVE \
-	  -e GPU_MAX_TIMES_TEN > ${CACHE_PATH}/env.aws
+	  -e GPU_MAX_TIMES_TEN \
+	  -e GPU_MAX_TIMES_TWENTY \
+	  -e GPU_MAX_TIMES_THIRTY \
+    -e GPU_MAX_TIMES_FOURTY \
+    -e GPU_MAX_TIMES_FIFTY \
+	  -e GPU_MAX_DIVIDED_BY_TWO \
+	  -e GPU_MAX_DIVIDED_BY_THREE \
+	  -e GPU_MAX_DIVIDED_BY_FOUR \
+      -E GPU_NODE_MAX_SIZE > ${CACHE_PATH}/env.aws
   #printenv | grep -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_S3_BUCKET -e NAMESPACE -e KOPS_CLUSTER_NAME -e KOPS_DNS_ZONE -e KOPS_STATE_STORE > ${CACHE_PATH}/env.aws
 }
 
@@ -217,6 +233,7 @@ function configure_gke() {
 	  return 0
   fi
   make gke/login
+  gcloud config set project ${PROJECT}
   export CLUSTER_NAME=$(inputbox "Deepcell" "Cluster Name" "${CLUSTER_NAME:-deepcell}")
   export CLUSTER_NAME=$(echo ${CLUSTER_NAME} | awk '{print tolower($0)}' | sed -E 's/[^a-z0-9]+/-/g' | sed -E 's/(^-+|-+$)//')
   if [ "$CLUSTER_NAME" = "" ]; then
@@ -226,16 +243,29 @@ function configure_gke() {
   if [ "$GKE_BUCKET" = "" ]; then
 	  return 0
   fi
-  export GKE_COMPUTE_REGION=$(inputbox "Google Cloud" "Compute Region" "${GPU_COMPUTE_REGION:-us-west1}")
+
+  local regions=$(gcloud compute regions list | grep "-" | awk '{print $1 " _ OFF"}')
+  local regions_with_default=${regions/us-west1 _ OFF/us-west1 _ ON}
+  local base_box_height=7
+  local selector_box_lines=$(echo "${regions}" | tr -cd '\n' | wc -c)
+  local total_lines=$(($base_box_height + $selector_box_lines))
+  export GKE_COMPUTE_REGION=$(radiobox "Google Cloud" \
+      "Choose a region for hosting your cluster:" \
+	  $total_lines 60 $selector_box_lines "$regions_with_default")
   if [ "$GKE_COMPUTE_REGION" = "" ]; then
 	  return 0
   fi
-  export GKE_COMPUTE_ZONE=$(inputbox "Google Cloud" "Compute Zone" "${GKE_COMPUTE_ZONE:-us-west1-b}")
-  if [ "$GKE_COMPUTE_ZONE" = "" ]; then
+
+  export GKE_MACHINE_TYPE=$(inputbox "Google Cloud" "Node (non-GPU) Type" "${GKE_MACHINE_TYPE:-n1-standard-4}")
+  if [ "$GKE_MACHINE_TYPE" = "" ]; then
 	  return 0
   fi
-  export GKE_MACHINE_TYPE=$(inputbox "Google Cloud" "Node (non-GPU) Type" "${GKE_MACHINE_TYPE:-n1-highmem-2}")
-  if [ "$GKE_MACHINE_TYPE" = "" ]; then
+  export NODE_MIN_SIZE=$(inputbox "Google Cloud" "Minimum Number of Compute (non-GPU) Nodes" "${NODE_MIN_SIZE:-1}")
+  if [ "$NODE_MIN_SIZE" = "" ]; then
+	  return 0
+  fi
+  export NODE_MAX_SIZE=$(inputbox "Google Cloud" "Maximum Number of Compute (non-GPU) Nodes" "${NODE_MAX_SIZE:-11}")
+  if [ "$NODE_MAX_SIZE" = "" ]; then
 	  return 0
   fi
   export NODE_MIN_SIZE=$(inputbox "Google Cloud" "Minimum Number of Compute (non-GPU) Nodes" "${NODE_MIN_SIZE:-2}")
@@ -290,23 +320,55 @@ function configure_gke() {
 
 function gke_gpu_config() {
   gcloud config set project ${PROJECT}
-  local gpus_in_region=$(gcloud compute accelerator-types list | \
-	  grep ${GKE_COMPUTE_ZONE} | awk '{print $1 " _ OFF"}')
-  local gpus_with_default=${gpus_in_region/nvidia-tesla-k80 _ OFF/nvidia-tesla-k80 _ ON}
-  local selector_box_lines=$(echo "${gpus_in_region}" | tr -cd '\n' | wc -c)
+  local gpus_in_region=$(gcloud compute accelerator-types list | grep ${GKE_COMPUTE_REGION} | awk '{print $1}' | sort -u | awk '{print $1 " _ OFF"}')
+  local gpus_with_default=${gpus_in_region/nvidia-tesla-v100 _ OFF/nvidia-tesla-v100 _ ON}
+  local base_box_height=7
+  local selector_box_lines=$(($(echo "${gpus_in_region}" | tr -cd '\n' | wc -c) + 1))
   local total_lines=$(($base_box_height + $selector_box_lines))
-  export GPU_TYPE=$(radiobox "Google Cloud" \
-	  "Choose from the GPU types available in your region:" \
+  export PREDICTION_GPU_TYPE=$(radiobox "Google Cloud" \
+      "Choose a GPU for prediction (not training) from the GPU types available in your region:" \
+	  $total_lines 60 $selector_box_lines "$gpus_with_default")
+  export TRAINING_GPU_TYPE=$(radiobox "Google Cloud" \
+      "Choose a GPU for training (not prediction) from the GPU types available in your region:" \
 	  $total_lines 60 $selector_box_lines "$gpus_with_default")
 
-  export GPU_PER_NODE=$(inputbox "Google Cloud" "GPUs per GPU Node" "${GPU_PER_NODE:-1}")
-  if [ "$GPU_PER_NODE" = "" ]; then
-	  return 0
-  fi
-  export GPU_MACHINE_TYPE=$(inputbox "Google Cloud" "GPU Node Type" "${GPU_MACHINE_TYPE:-n1-highmem-2}")
-  if [ "$GPU_MACHINE_TYPE" = "" ]; then
-	  return 0
-  fi
+  local zones=$(gcloud compute zones list | grep "${GKE_COMPUTE_REGION}" | grep "UP" | awk '{print $1 " _ OFF"}')
+  local all_region_zones=$(echo $zones | grep -o '\b\w\+-\w\+-\w\+\b')
+  local region_zone_array=($all_region_zones)
+  local zones_with_prediction_gpus=$(gcloud compute accelerator-types list | grep "${PREDICTION_GPU_TYPE}" | awk '{print $2}')
+  local region_zones_gpu=()
+  for i in "${region_zone_array[@]}"
+  do
+      if [[ $zones_with_prediction_gpus == *${i}* ]]; then
+          region_zones_gpu+=(${i})
+      fi
+  done
+  local zones_with_training_gpus=$(gcloud compute accelerator-types list | grep "${TRAINING_GPU_TYPE}" | awk '{print $2}')
+  local region_zones_all_gpus=()
+  for i in "${region_zones_gpu[@]}"
+  do
+      if [[ $zones_with_prediction_gpus == *${i}* ]]; then
+          region_zones_all_gpus+=(${i})
+      fi
+  done
+  export REGION_ZONES_WITH_GPUS=$(IFS=','; echo "${region_zones_all_gpus[*]}"; IFS=$' \t\n')
+
+  msgbox "Caution!" \
+      "Here are the zones in your chosen region that host the GPU type(s) you chose:
+
+$REGION_ZONES_WITH_GPUS
+
+If you see any fewer than 2 zones listed above, please reconfigure the cluster beofre deploying. Different choices of GPU(s) and/or region will be necessary."
+
+  ## Maybe include these in an advanced menu?
+  #export GPU_PER_NODE=$(inputbox "Google Cloud" "GPUs per GPU Node" "${GPU_PER_NODE:-1}")
+  #if [ "$GPU_PER_NODE" = "" ]; then
+  #	  return 0
+  #fi
+  #export GPU_MACHINE_TYPE=$(inputbox "Google Cloud" "GPU Node Type" "${GPU_MACHINE_TYPE:-n1-highmem-2}")
+  #if [ "$GPU_MACHINE_TYPE" = "" ]; then
+  #	  return 0
+  #fi
   export GPU_NODE_MIN_SIZE=$(inputbox "Google Cloud" "Minimum Number of GPU Nodes" "${GPU_NODE_MIN_SIZE:-0}")
   if [ "$GPU_NODE_MIN_SIZE" = "" ]; then
 	  return 0
@@ -322,6 +384,35 @@ function gke_gpu_config() {
   export GPU_MAX_TIMES_FOUR=$(($GPU_NODE_MAX_SIZE*4))
   export GPU_MAX_TIMES_FIVE=$(($GPU_NODE_MAX_SIZE*5))
   export GPU_MAX_TIMES_TEN=$(($GPU_NODE_MAX_SIZE*10))
+  export GPU_MAX_TIMES_TWENTY=$(($GPU_NODE_MAX_SIZE*20))
+  export GPU_MAX_TIMES_THIRTY=$(($GPU_NODE_MAX_SIZE*30))
+  export GPU_MAX_TIMES_FOURTY=$(($GPU_NODE_MAX_SIZE*40))
+  export GPU_MAX_TIMES_FIFTY=$(($GPU_NODE_MAX_SIZE*50))
+  export GPU_MAX_DIVIDED_BY_TWO=$(($GPU_NODE_MAX_SIZE/2))
+  export GPU_MAX_DIVIDED_BY_THREE=$(($GPU_NODE_MAX_SIZE/3))
+  export GPU_MAX_DIVIDED_BY_FOUR=$(($GPU_NODE_MAX_SIZE/4))
+
+  make create_cache_path
+  printenv | grep -e CLOUD_PROVIDER > ${CACHE_PATH}/env
+  printenv | grep -e PROJECT -e CLUSTER_NAME -e GKE_BUCKET \
+      -e NODE_MIN_SIZE -e NODE_MAX_SIZE \
+	  -e GKE_COMPUTE_REGION \
+	  -e GKE_MACHINE_TYPE -e PREDICTION_GPU_TYPE \
+      -e TRAINING_GPU_TYPE -e GPU_PER_NODE \
+	  -e GPU_MACHINE_TYPE -e GPU_NODE_MIN_SIZE \
+	  -e GPU_NODE_MAX_SIZE \
+	  -e GPU_MAX_TIMES_TWO \
+	  -e GPU_MAX_TIMES_THREE \
+	  -e GPU_MAX_TIMES_FOUR \
+	  -e GPU_MAX_TIMES_FIVE \
+	  -e GPU_MAX_TIMES_TEN \
+	  -e GPU_MAX_TIMES_TWENTY \
+	  -e GPU_MAX_TIMES_THIRTY \
+    -e GPU_MAX_TIMES_FOURTY \
+    -e GPU_MAX_TIMES_FIFTY \
+	  -e GPU_MAX_DIVIDED_BY_TWO \
+	  -e GPU_MAX_DIVIDED_BY_THREE \
+	  -e GPU_MAX_DIVIDED_BY_FOUR > ${CACHE_PATH}/env.gke
 }
 
 function gke_tpu_config() {
@@ -421,6 +512,8 @@ function benchmarking() {
 
 function main() {
   export MENU=true
+  # The following two lines constitute a workaround for a bug where the first dialog call after startup fails before user input is possible.
+  dialog --msgbox "Loading..." 12 60 --sleep 1
   msgbox "Welcome!" \
 	 "Welcome to the Deepcell Kiosk!
 

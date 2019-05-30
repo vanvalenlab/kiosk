@@ -1,6 +1,6 @@
-FROM cloudposse/build-harness:0.9.0 as build-harness
+FROM cloudposse/build-harness:0.20.0 as build-harness
 
-FROM cloudposse/geodesic:0.32.5
+FROM cloudposse/geodesic:0.91.0
 
 RUN apk add --update dialog libqrencode
 
@@ -30,8 +30,8 @@ ENV KOPS_BASTION_PUBLIC_NAME="bastion"
 ENV BASTION_MACHINE_TYPE="t2.medium"
 ENV MASTER_MACHINE_TYPE="t2.medium"
 ENV NODE_MACHINE_TYPE="t2.medium"
-ENV NODE_MAX_SIZE="5"
-ENV NODE_MIN_SIZE="2"
+ENV NODE_MAX_SIZE="60"
+ENV NODE_MIN_SIZE="1"
 
 # Filesystem entry for tfstate
 RUN s3 fstab '${KOPS_STATE_STORE}' '/' '/s3'
@@ -53,8 +53,5 @@ COPY rootfs/ /
 
 # Enable the menu
 RUN ln -s /usr/local/bin/menu.sh /etc/profile.d/99.menu.sh
-
-# Grab debugged version of helmfile
-RUN make -C /packages/install helmfile HELMFILE_VERSION=0.40.0
 
 WORKDIR /conf/

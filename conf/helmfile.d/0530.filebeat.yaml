@@ -8,7 +8,11 @@ helmDefaults:
 releases:
 
 ################################################################################
+<<<<<<< HEAD
 ## Kibana ######################################################################
+=======
+## FileBeat ####################################################################
+>>>>>>> master
 ################################################################################
 
 #
@@ -16,12 +20,12 @@ releases:
 #   - [web address of Helm chart's YAML file]
 #
 - name: "filebeat"
-  namespace: "deepcell"
+  namespace: "elk"
   labels:
     chart: "filebeat"
     component: "filebeat"
-    namespace: "deepcell"
-    vendor: "vanvalenlab"
+    namespace: "elk"
+    vendor: "elastic.co"
     default: "true"
   chart: "stable/filebeat"
   version: "1.0.0"
@@ -66,10 +70,15 @@ releases:
           filename: filebeat
           rotate_every_kb: 10000
           number_of_files: 5
-        output.elasticsearch:
+        # output.elasticsearch:
+        #   enabled: true
+        #   hosts: ["http://elasticsearch-client:9200"]
+        #   #index: "filebeat-%{[beat.version]}-%{+yyyy.MM.dd}"
+        #   username: "elastic"
+        #   password: "changeme"
+        output.logstash:
           enabled: true
-          hosts: ["http://elasticsearch-client:9200"]
-          #index: "filebeat-%{[beat.version]}-%{+yyyy.MM.dd}"
+          hosts: ["logstash:5044"]
           username: "elastic"
           password: "changeme"
         # When a key contains a period, use this format for setting values on the command line:
@@ -81,5 +90,20 @@ releases:
           operator: Exists
           effect: NoSchedule
         - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+        - key: elasticsearch_data
+          operator: Exists
+          effect: NoSchedule
+        - key: prediction_gpu
+          operator: Exists
+          effect: NoSchedule
+        - key: training_gpu
+          operator: Exists
+          effect: NoSchedule
+        - key: rc_dp
+          operator: Exists
+          effect: NoSchedule
+        - key: logstash
           operator: Exists
           effect: NoSchedule

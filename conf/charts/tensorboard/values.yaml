@@ -1,34 +1,40 @@
-app_name: "tensorboard"
+# Default values for tensorboard.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-# deployment.yaml
-deployment_name: "tensorboard-deployment"
 replicas: 1
-image_name: "vanvalenlab/kiosk-tensorboard"
-image_tag: "latest"
-deployment_port: 6006
-container_name: "tensorboard-container"
+
+image:
+  repository: "vanvalenlab/kiosk-tensorboard"
+  tag: "latest"
+  pullPolicy: "Always"
+
+resources: {}
+
+service:
+  type: "ClusterIP"
+
+  httpIngressEnabled: true
+  internalHttpPort: 6006
+  httpTargetPort: 6006
+  externalHttpPort: 6006
+
+  httpsIngressEnabled: false
+
+ingress:
+  enabled: true
+  path: /tensorboard
+  annotations: {}
+    # kubernetes.io/ingress.class: "nginx"
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    # nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "25m"
+
 env:
   LOG_PREFIX: "tensorboard_logs"
   CLOUD_PROVIDER: "aws"
   GKE_COMPUTE_ZONE: "us-west1-b"
 
-# service.yaml
-service_name: "tensorboard-service"
-service_port: 6006
-service_type: "ClusterIP"
-
-# ingress.yaml
-ingress_name: "tensorboard-ingress"
-ingress_path: "/tensorboard"
-ingress:
-  annotations:
-    #kubernetes.io/ingress.class: "nginx"
-    #nginx.ingress.kubernetes.io/rewrite-target: /
-    #nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    #nginx.ingress.kubernetes.io/proxy-body-size: "25m"
-
-# secrets.yaml
-secrets_name: "tensorboard-env-variables"
 secrets:
   AWS_ACCESS_KEY_ID: "change_me"
   AWS_SECRET_ACCESS_KEY: "change_me"

@@ -8,7 +8,7 @@ helmDefaults:
 releases:
 
 ################################################################################
-## Tensorflow-Serving ##########################################################
+## TensorFlow-Serving ##########################################################
 ################################################################################
 
 #
@@ -26,32 +26,68 @@ releases:
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/tf-serving'
   version: "0.1.0"
   values:
-    - app_name: "tf-serving"
-      replicas: 0
-      image_name: "vanvalenlab/kiosk-tf-serving"
-      image_version: "0.1"
-      deployment_name: "tf-serving-deployment"
-      deployment_port: 8500
-      container_name: "tf-serving-container"
-      service_name: "tf-serving-service"
-      service_port: 8500
-      service_type: "ClusterIP"
+    - replicas: 0
+
+      image:
+        repository: "vanvalenlab/kiosk-tf-serving"
+        tag: "0.1"
+        pullPolicy: "Always"
+
+      resources:
+        requests:
+          nvidia.com/gpu: 1
+          cpu: 500m
+          memory: 3.5Gi
+        limits:
+          nvidia.com/gpu: 1
+          # cpu: 100m
+          # memory: 2048Mi
+
+      service:
+        type: "ClusterIP"
+
+        httpIngressEnabled: true
+        internalHttpPort: 8501
+        httpTargetPort: 8501
+        externalHttpPort: 8501
+
+        grpcIngressEnabled: true
+        internalGrpcPort: 8500
+        grpcTargetPort: 8500
+        externalGrpcPort: 8500
+
+        httpsIngressEnabled: false
+
+        annotations:
+          prometheus.io/path: /monitoring/prometheus/metrics
+          prometheus.io/port: "8501"
+          prometheus.io/scrape: "true"
+
+      annotations:
+        prometheus.io/path: /monitoring/prometheus/metrics
+        prometheus.io/port: "8501"
+        prometheus.io/scrape: "true"
+
       nodeSelector:
 {{ if eq (env "CLOUD_PROVIDER" | default "aws") "aws" }}
         beta.kubernetes.io/instance-type: '{{ env "AWS_GPU_MACHINE_TYPE" | default "p2.xlarge" }}'
 {{ else }}
-        cloud.google.com/gke-accelerator: '{{ env "GPU_TYPE" | default "nvidia-tesla-k80" }}'
+        cloud.google.com/gke-accelerator: '{{ env "PREDICTION_GPU_TYPE" | default "nvidia-tesla-k80" }}'
         cloud.google.com/gke-preemptible: "true"
 {{ end }}
+
       env:
-        RPC_PORT: "8500"
-        REST_PORT: "8501"
-        REST_TIMEOUT: "90000"
+        PORT: "8500"
+        REST_API_PORT: "8501"
+        REST_API_TIMEOUT: "30000"
+        MODEL_CONFIG_FILE: "/kiosk/tf-serving/models.conf"
+        # ENABLE_BATCHING="true" causes TensorFlow Error: `Blas GEMM launch failed`
+        ENABLE_BATCHING: "false"
+        GRPC_CHANNEL_ARGS: ""
         MODEL_PREFIX: "models"
-        TF_SERVING_CONFIG_FILE: "/kiosk/tf-serving/models.conf"
         CLOUD_PROVIDER: '{{ env "CLOUD_PROVIDER" | default "aws" }}'
-        LOG_LEVEL: "3"
-        DEBUG: "FALSE"
+        TF_CPP_MIN_LOG_LEVEL: "0"
+
       secrets:
         AWS_ACCESS_KEY_ID: '{{ env "AWS_ACCESS_KEY_ID" | default "NA" }}'
         AWS_SECRET_ACCESS_KEY: '{{ env "AWS_SECRET_ACCESS_KEY" | default "NA" }}'

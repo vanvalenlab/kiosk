@@ -1,17 +1,20 @@
-app_name: "redis-poller"
+# Default values for bucket-monitor.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-# deployment.yaml
-deployment_name: "bucket-monitor-deployment"
 replicas: 1
-image_name: "vanvalenlab/kiosk-bucket-monitor"
-image_version: "latest"
-container_name: "bucket-monitor-container"
+
+image:
+  repository: "vanvalenlab/kiosk-bucket-monitor"
+  tag: "latest"
+  pullPolicy: "Always"
+
+resources: {}
+
 env:
   DEBUG: "true"
   INTERVAL: 10
-  JOB_TYPE: "predict"
-  UPLOAD_PREFIX: "uploads"
   CLOUD_PROVIDER: "overwrite_this"
   BUCKET: "overwrite_this"
-  REDIS_HOST: "overwrite_this"
-  REDIS_PORT: "specify_me"
+  REDIS_HOST: "redis-master"
+  REDIS_PORT: "6379"

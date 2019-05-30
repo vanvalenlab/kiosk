@@ -5,6 +5,10 @@ helmDefaults:
     - "--force"
     - "--reset-values"
 
+################################################################################
+## Redis Data Store ############################################################
+################################################################################
+
 repositories:
  # Stable repo of official helm charts
  - name: "stable"
@@ -23,3 +27,8 @@ releases:
        value: "false"
      - name: "cluster.enabled"
        value: "false"
+   values:
+     - resources:
+         requests:
+           cpu: 200m
+           memory: 256Mi
