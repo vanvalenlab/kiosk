@@ -11,7 +11,8 @@ export CLOUDSDK_CONFIG=/localhost/.config/gcloud/
 # Increase quotas: https://console.cloud.google.com/iam-admin/quotas
 
 export CLUSTER_NAME ?= deepcell
-export GKE_COMPUTE_REGION ?= us-west1
+export GKE_COMPUTE_REGION ?= us-central1
+export GKE_COMPUTE_ZONE ?= us-central1-f
 export GKE_MACHINE_TYPE ?= n1-standard-2
 export NODE_MIN_SIZE ?= 1
 export NODE_MAX_SIZE ?= 10
@@ -19,6 +20,7 @@ export GKE_NODE_SERVICE_ACCOUNT_EMAIL ?= $(CLOUDSDK_CONTAINER_CLUSTER)@$(CLOUDSD
 
 # Not all GPU types are available in all regions/availability zones
 export GPU_COMPUTE_REGION ?= $(GKE_COMPUTE_REGION)
+export GPU_COMPUTE_ZONE ?= $(GKE_COMPUTE_ZONE)
 export PREDICTION_GPU_TYPE ?= nvidia-tesla-t4
 export TRAINING_GPU_TYPE ?= nvidia-tesla-v100
 export GPU_MACHINE_TYPE ?= n1-standard-2
@@ -58,18 +60,15 @@ gke/create/cluster/tpu:
 	@echo "Using the following command: "
 	@gcloud components install beta --quiet
 	@gcloud config set project ${PROJECT}
-	@gcloud config set compute/zone ${GKE_COMPUTE_ZONE}
 	gcloud beta container clusters create $(CLUSTER_NAME) \
 		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
-		--region=$(GKE_COMPUTE_REGION) \
-		--node-locations=$(REGION_ZONES_WITH_GPUS) \
+		--zone=$(GKE_COMPUTE_ZONE) \
 		--max-nodes=$(NODE_MAX_SIZE) \
 		--min-nodes=$(NODE_MIN_SIZE) \
 		--machine-type=$(GKE_MACHINE_TYPE) \
 		--cluster-version $(KUBERNETES_VERSION) \
 		--enable-autoscaling \
 		--enable-autoupgrade \
-		--scopes=cloud-platform \
 		--enable-ip-alias \
 		--enable-tpu \
 		|| echo "Apparently, the cluster already exists."
@@ -80,7 +79,7 @@ gke/create/cluster/tpu:
 ## Destroy GKE cluster
 gke/destroy/cluster:
 	@echo "Destroying cluster..."
-	@-gcloud container clusters --region $(GKE_COMPUTE_REGION) delete $(CLUSTER_NAME) --quiet
+	@-gcloud container clusters --zone $(GKE_COMPUTE_ZONE) delete $(CLUSTER_NAME) --quiet
 	@echo "Cluster destruction finished."
 	@echo " "
 	@echo " "
@@ -88,7 +87,7 @@ gke/destroy/cluster:
 ## Set context to use GKE cluster (e.g. with kubectl)
 gke/use/cluster:
 	@gcloud config set project $(CLOUDSDK_CORE_PROJECT)
-	@gcloud config set compute/region $(GKE_COMPUTE_REGION)
+	@gcloud config set compute/zone $(GKE_COMPUTE_ZONE)
 	@gcloud container clusters get-credentials $(CLUSTER_NAME)
 
 ## List all GKE projects
@@ -117,7 +116,7 @@ gke/create/node-pools:
 	gcloud container node-pools create rc-dp-cpu \
 		--cluster $(CLUSTER_NAME) \
 		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
-		--region $(GKE_COMPUTE_REGION) \
+		--zone $(GKE_COMPUTE_ZONE) \
 		--num-nodes 1 \
 		--min-nodes 1 \
 		--max-nodes ${NODE_MAX_SIZE} \
@@ -135,7 +134,7 @@ gke/create/node-pools:
 		--cluster $(CLUSTER_NAME) \
 		--accelerator type=$(PREDICTION_GPU_TYPE),count=$(GPU_PER_NODE) \
 		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
-		--region $(GPU_COMPUTE_REGION) \
+		--zone $(GPU_COMPUTE_ZONE) \
 		--num-nodes $(GPU_NODE_MIN_SIZE) \
 		--min-nodes $(GPU_NODE_MIN_SIZE) \
 		--max-nodes $(GPU_NODE_MAX_SIZE) \
@@ -152,7 +151,7 @@ gke/create/node-pools:
 		--cluster $(CLUSTER_NAME) \
 		--accelerator type=$(TRAINING_GPU_TYPE),count=$(GPU_PER_NODE) \
 		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
-		--region $(GPU_COMPUTE_REGION) \
+		--zone $(GPU_COMPUTE_ZONE) \
 		--num-nodes $(GPU_NODE_MIN_SIZE) \
 		--min-nodes $(GPU_NODE_MIN_SIZE) \
 		--max-nodes $(GPU_NODE_MAX_SIZE) \
@@ -166,7 +165,7 @@ gke/create/node-pools:
 	@echo "Using the following command: "
 	gcloud container node-pools create elasticsearch-cpu \
 		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
-		--region $(GKE_COMPUTE_REGION) \
+		--zone $(GKE_COMPUTE_ZONE) \
 		--cluster $(CLUSTER_NAME) \
 		--num-nodes 2 \
 		--min-nodes 1 \
@@ -183,7 +182,7 @@ gke/create/node-pools:
 	@echo "Using the following command: "
 	gcloud container node-pools create logstash-cpu \
 		--service-account=$(GKE_NODE_SERVICE_ACCOUNT_EMAIL) \
-		--region $(GKE_COMPUTE_REGION) \
+		--zone $(GKE_COMPUTE_ZONE) \
 		--cluster $(CLUSTER_NAME) \
 		--num-nodes 3 \
 		--min-nodes 1 \
