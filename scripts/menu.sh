@@ -268,20 +268,12 @@ function configure_gke() {
   if [ "$NODE_MAX_SIZE" = "" ]; then
 	  return 0
   fi
-  export NODE_MIN_SIZE=$(inputbox "Google Cloud" "Minimum Number of Compute (non-GPU) Nodes" "${NODE_MIN_SIZE:-2}")
-  if [ "$NODE_MIN_SIZE" = "" ]; then
-	  return 0
-  fi
-  export NODE_MAX_SIZE=$(inputbox "Google Cloud" "Maximum Number of Compute (non-GPU) Nodes" "${NODE_MAX_SIZE:-11}")
-  if [ "$NODE_MAX_SIZE" = "" ]; then
-	  return 0
-  fi
 
   local base_box_height=7
   local total_lines=$(($base_box_height+2))
   export GPUS_OR_TPUS=$(radiobox "Google Cloud" \
       "Would you like to use GPUs or TPUs in your cluster?" \
-      $total_lines 60 2 "GPUs ON TPUs OFF")
+      $total_lines 60 2 "GPUs _ ON TPUs _ OFF")
 
   export CLOUD_PROVIDER=gke
 
