@@ -1,0 +1,81 @@
+helmDefaults:
+  args:
+    - "--wait"
+    - "--timeout=600"
+    - "--force"
+    - "--reset-values"
+
+releases:
+
+################################################################################
+## Caliban #####################################################################
+################################################################################
+
+#
+# References:
+#   - [web address of Helm chart's YAML file]
+#
+- name: caliban
+  namespace: deepcell
+  labels:
+    chart: caliban
+    component: deepcell
+    namespace: deepcell
+    vendor: vanvalenlab
+    default: true
+  chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/caliban'
+  version: 0.1.0
+  values:
+    - replicas: 1
+
+      image:
+        repository: vanvalenlab/caliban
+        tag: 0.1
+        pullPolicy: Always
+
+      resources:
+        requests:
+          cpu: 150m
+          memory: 256Mi
+        # limits:
+        #   cpu: 100m
+        #   memory: 512Mi
+
+      service:
+        type: "ClusterIP"
+
+        httpIngressEnabled: true
+        internalHttpPort: 8080
+        httpTargetPort: 8080
+        externalHttpPort: 8080
+
+        httpsIngressEnabled: false
+        internalHttpsPort: 8443
+        httpsTargetPort: 8443
+        externalHttpsPort: 8443
+
+      ingress:
+        enabled: true
+        path: /
+        annotations:
+          kubernetes.io/ingress.class: "nginx"
+          nginx.ingress.kubernetes.io/rewrite-target: /
+          nginx.ingress.kubernetes.io/ssl-redirect: "false"
+          nginx.ingress.kubernetes.io/proxy-body-size: "1g"
+
+      env:
+        PORT: 8080
+        REDIS_HOST: redis
+        REDIS_PORT: 26379
+        REDIS_SENTINEL: true
+        MODEL_PREFIX: "models/"
+        AWS_REGION: '{{ env "AWS_REGION" | default "us-east-1" }}'
+        CLOUD_PROVIDER: '{{ env "CLOUD_PROVIDER" | default "aws" }}'
+        UPLOAD_PREFIX: "uploads/"
+
+      secrets:
+        AWS_ACCESS_KEY_ID: '{{ env "AWS_ACCESS_KEY_ID" | default "NA" }}'
+        AWS_SECRET_ACCESS_KEY: '{{ env "AWS_SECRET_ACCESS_KEY" | default "NA" }}'
+        AWS_S3_BUCKET: '{{ env "AWS_S3_BUCKET" | default "NA" }}'
+        GCLOUD_STORAGE_BUCKET: '{{ env "GKE_BUCKET" | default "NA" }}'
+        GCLOUD_PROJECT_ID: '{{ env "PROJECT" | default "NA" }}'

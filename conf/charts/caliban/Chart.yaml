@@ -1,0 +1,18 @@
+apiVersion: v1
+name: caliban
+version: 0.1.0
+#kubeVersion: ^1.9.8
+description: This project establishes a web-server for Caliban, a human-in-the-loop annotation engine for DeepCell.
+keywords:
+  - react
+home: https://www.github.com/vanvalenlab/caliban
+sources:
+    - https://hub.docker.com/vanvalenlab/caliban
+maintainers:
+  - name: Erick Moen
+    email: emoen@caltech.edu
+    url: vanvalen.caltech.edu
+engine: gotpl
+appVersion: 0.1.0
+deprecated: false
+tillerVersion: ^2.9.1
