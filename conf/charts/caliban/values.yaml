@@ -11,7 +11,7 @@ image:
 
 ingress:
   enabled: true
-  path: /
+  path: /caliban
   annotations: {}
     #kubernetes.io/ingress.class: "nginx"
     #nginx.ingress.kubernetes.io/rewrite-target: /
@@ -22,9 +22,9 @@ service:
   type: "ClusterIP"
 
   httpIngressEnabled: true
-  internalHttpPort: 8080
-  httpTargetPort: 8080
-  externalHttpPort: 8080
+  internalHttpPort: 5000
+  httpTargetPort: 5000
+  externalHttpPort: 5000
 
   httpsIngressEnabled: false
   internalHttpsPort: 8443
@@ -34,12 +34,7 @@ service:
 resources: {}
 
 env:
-  PORT: "8080"
-  REDIS_HOST: "redis-master"
-  REDIS_PORT: "6379"
-  MODEL_PREFIX: "models/"
-  AWS_REGION: "us-east-1"
-  CLOUD_PROVIDER: "aws"
+  PORT: "5000"
 
 secrets:
   AWS_ACCESS_KEY_ID: "change_me"
