@@ -95,7 +95,8 @@ releases:
         SCALE_DETECT_ENABLED: "false"
         SCALE_DETECT_MODEL: "ScaleDetection:1"
 
-        TRACKING_MODEL: "tracking_model_benchmarking_757_step5_20epoch_80split_9tl:1"
+        TRACKING_MODEL: "TrackingModelInf:1"
+        NEIGHBORHOOD_ENCODER: "TrackingModelNE:1"
         DRIFT_CORRECT_ENABLED: "false"
 
       secrets:

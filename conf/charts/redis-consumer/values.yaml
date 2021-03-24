@@ -74,8 +74,9 @@ env:
   DRIFT_CORRECT_ENABLED: "false"
   NORMALIZE_TRACKING: "false"
 
-  TRACKING_MODEL: "tracking_model_benchmarking_757_step5_20epoch_80split_9tl:1"
-  TRACKING_SEGMENT_MODEL: "NuclearSegmentation:0"
+  TRACKING_MODEL: "TrackingModelInf:1"
+  NEIGHBORHOOD_ENCODER: "TrackingModelNE:1"
+  TRACKING_SEGMENT_MODEL: "NuclearSegmentation:3"
   TRACKING_POSTPROCESS_FUNCTION: "deep_watershed"
 
 secrets:
