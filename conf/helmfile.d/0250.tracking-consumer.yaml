@@ -27,7 +27,8 @@ releases:
 
       image:
         repository: vanvalenlab/kiosk-redis-consumer
-        tag: 0.10.0
+        # tag: 0.10.0
+        tag: graph_tracking
 
       nameOverride: tracking-consumer
 
