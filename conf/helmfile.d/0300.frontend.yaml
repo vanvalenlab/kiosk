@@ -17,7 +17,7 @@ releases:
     vendor: vanvalenlab
     default: true
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/frontend'
-  version: 0.2.1
+  version: 0.3.0
   wait: true
   timeout: 300
   atomic: true
@@ -27,7 +27,7 @@ releases:
 
       image:
         repository: vanvalenlab/kiosk-frontend
-        tag: 0.6.0
+        tag: 0.7.0
 
       resources:
         requests:

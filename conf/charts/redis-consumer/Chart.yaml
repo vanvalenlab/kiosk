@@ -1,6 +1,6 @@
 apiVersion: v1
 name: redis-consumer
-version: 0.4.0
+version: 0.5.0
 #kubeVersion: ^1.9.8
 description: This project consumes and processes redis event, placing the final result back to redis.
 keywords:
@@ -13,6 +13,6 @@ maintainers:
     email: bbannon@caltech.edu
     url: vanvalen.caltech.edu
 engine: gotpl
-appVersion: 0.10.0
+appVersion: 0.11.0
 deprecated: false
 tillerVersion: ^2.9.1

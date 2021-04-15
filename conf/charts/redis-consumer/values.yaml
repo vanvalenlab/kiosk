@@ -6,7 +6,7 @@ replicas: 1
 
 image:
   repository: vanvalenlab/kiosk-redis-consumer
-  tag: 0.9.0
+  tag: 0.11.0
   pullPolicy: IfNotPresent
 
 resources: {}

@@ -1,6 +1,6 @@
 apiVersion: v1
 name: frontend
-version: 0.2.2
+version: 0.3.0
 #kubeVersion: ^1.9.8
 description: This project provides the frontend interface for the Tensorflow-serving backend of Deepcell.
 keywords:
@@ -13,6 +13,6 @@ maintainers:
     email: bbannon@caltech.edu
     url: vanvalen.caltech.edu
 engine: gotpl
-appVersion: 0.6.0
+appVersion: 0.7.0
 deprecated: false
 tillerVersion: ^2.9.1

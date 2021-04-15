@@ -17,13 +17,13 @@ releases:
     vendor: vanvalenlab
     default: true
   chart: '{{ env "CHARTS_PATH" | default "/conf/charts" }}/redis-consumer'
-  version: 0.4.0
+  version: 0.5.0
   values:
     - replicas: 1
 
       image:
         repository: vanvalenlab/kiosk-redis-consumer
-        tag: 0.10.0
+        tag: 0.11.0
 
       nameOverride: mesmer-zip-consumer
 
